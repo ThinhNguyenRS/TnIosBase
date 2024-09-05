@@ -118,7 +118,7 @@ public class TnBluetoothServer: NSObject {
     static var sendingWorkerID = 0
     private var sendingWorker: SendingWorker?
 
-    var delegate: TnBluetoothServerDelegate?
+    public var delegate: TnBluetoothServerDelegate? = nil
 
     private var dataQueue: [String: Data] = [:]
 
