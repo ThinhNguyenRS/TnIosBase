@@ -149,7 +149,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     public let LOG_NAME = "TnNetworkConnection"
 
     //The TCP maximum package size is 64K 65536
-    let MTU = 1024*1024
+    let MTU = 64*1024
     
     public let host: String
     public let port: UInt16
@@ -245,19 +245,17 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
     
     private func receive() {
-        queue.async { [self] in 
-            connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { [self] (data, _, isComplete, error) in
-                processReceived(data)
-                
-                if isComplete {
-                    // receive completed, that may be meant the connection is disconnected
-                    stop(error: nil)
-                } else if let error = error {
-                    stop(error: error)
-                } else {
-                    // continue receive
-                    receive()
-                }
+        connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { [self] (data, _, isComplete, error) in
+            processReceived(data)
+            
+            if isComplete {
+                // receive completed, that may be meant the connection is disconnected
+                stop(error: nil)
+            } else if let error = error {
+                stop(error: error)
+            } else {
+                // continue receive
+                receive()
             }
         }
     }
@@ -286,21 +284,19 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
     
     public func send(_ data: Data) {
-        queue.async { [self] in
-            sendChunk(data, completion: { [self] in
-                if let eom {
-                    sendChunk(eom, completion: { [self] in
-                        // signal send
-                        logDebug("sent", data.count)
-                        self.delegate?.tnNetwork(self, sentData: data)
-                    })
-                } else {
+        sendChunk(data, completion: { [self] in
+            if let eom {
+                sendChunk(eom, completion: { [self] in
                     // signal send
                     logDebug("sent", data.count)
                     self.delegate?.tnNetwork(self, sentData: data)
-                }
-            })
-        }
+                })
+            } else {
+                // signal send
+                logDebug("sent", data.count)
+                self.delegate?.tnNetwork(self, sentData: data)
+            }
+        })
     }
 }
 
