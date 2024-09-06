@@ -109,34 +109,20 @@ extension Color {
     public static let background_3 = dark_4_magnesium.opacity(0.75)
     public static let background_4 = dark_5_aluminum.opacity(0.75)
     
-    public static let tin = Color(RGBColorSpace.sRGB, red: 0.57, green: 0.57, blue: 0.57, opacity: 1)
     public static let background85Dark = Color(RGBColorSpace.sRGB, red: 0.15, green: 0.15, blue: 0.15, opacity: 1)
+    
+    public static let appleTin = Color(RGBColorSpace.sRGB, red: 0.57, green: 0.57, blue: 0.57, opacity: 1)
+    public static let appleAsparagus = Color(RGBColorSpace.sRGB, red: 0.576, green: 0.566, blue: 0.0, opacity: 1)
+    public static let appleCayenne = Color(RGBColorSpace.sRGB, red: 0.581, green: 0.067, blue: 0.0, opacity: 1)
+    public static let appleClover = Color(RGBColorSpace.sRGB, red: 0.0, green: 0.560, blue: 0.0, opacity: 1)
+    public static let appleFern = Color(RGBColorSpace.sRGB, red: 0.308, green: 0.562, blue: 0.0, opacity: 1)
+    public static let appleSalmon = Color(RGBColorSpace.sRGB, red: 1.0, green: 0.493, blue: 0.474, opacity: 1)
+    public static let appleSteel = Color(RGBColorSpace.sRGB, red: 0.476, green: 0.476, blue: 0.476, opacity: 1)
+    public static let appleTangerine = Color(RGBColorSpace.sRGB, red: 1.0, green: 0.587, blue: 0.0, opacity: 1)
+    public static let appleTeal = Color(RGBColorSpace.sRGB, red: 0.0, green: 0.569, blue: 0.575, opacity: 1)
+    public static let appleCantaloupe = Color(RGBColorSpace.sRGB, red: 1.0, green: 0.832, blue: 0.473, opacity: 1)
+    public static let appleBanana = Color(RGBColorSpace.sRGB, red: 1.0, green: 0.988, blue: 0.473, opacity: 1)    
+    public static let appleIron = Color(RGBColorSpace.sRGB, red: 0.371, green: 0.371, blue: 0.371, opacity: 1)
+    public static let appleMagnesium = Color(RGBColorSpace.sRGB, red: 0.754, green: 0.754, blue: 0.754, opacity: 1)
+    public static let appleMocha = Color(RGBColorSpace.sRGB, red: 0.579, green: 0.322, blue: 0.000, opacity: 1)
 }
-
-//public extension Color {
-////    public static let lightText = Color(UIColor.lightText)
-////    public static let darkText = Color(UIColor.darkText)
-////
-////    public static let label = Color(UIColor.label)
-////    public static let secondaryLabel = Color(UIColor.secondaryLabel)
-////    public static let tertiaryLabel = Color(UIColor.tertiaryLabel)
-////    public static let quaternaryLabel = Color(UIColor.quaternaryLabel)
-////
-////    public static let systemBackground = Color(UIColor.systemBackground)
-////    public static let secondarySystemBackground = Color(UIColor.secondarySystemBackground)
-////    public static let tertiarySystemBackground = Color(UIColor.tertiarySystemBackground)
-//
-//    public static let lightText = Color(.white)
-//    public static let darkText = Color(.white)
-//
-//    public static let label = Color(.white)
-//    public static let secondaryLabel = Color(.white)
-//    public static let tertiaryLabel = Color(.white)
-//    public static let quaternaryLabel = Color(.white)
-//
-////    public static let systemBackground = Color(UIColor.systemBackground)
-////    public static let secondarySystemBackground = Color(UIColor.secondarySystemBackground)
-////    public static let tertiarySystemBackground = Color(UIColor.tertiarySystemBackground)
-//
-//    // There are more..
-//}

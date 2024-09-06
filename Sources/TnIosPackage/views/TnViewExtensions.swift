@@ -489,7 +489,7 @@ public func tnLabel(_ label: String, iconSystemName: String) -> some View {
 }
 
 // MARK: Circles
-public func tnCircle(radius: CGFloat, backColor: Color = .tin.opacity(0.8)) -> some View {
+public func tnCircle(radius: CGFloat, backColor: Color = .appleTin.opacity(0.8)) -> some View {
     Circle()
         .foregroundColor(backColor)
         .frame(width: radius, height: radius, alignment: .center)
@@ -501,14 +501,14 @@ public func tnCircle(radius: CGFloat, strokeColor: Color, strokeWidth: CGFloat =
         .frame(width: radius, height: radius, alignment: .center)
 }
 
-public func tnCircle(imageName: String, radius: CGFloat = 80, backColor: Color = .tin.opacity(0.8), imageColor: Color? = .white) -> some View {
+public func tnCircle(imageName: String, radius: CGFloat = 80, backColor: Color = .appleTin.opacity(0.8), imageColor: Color? = .white) -> some View {
     Circle()
         .foregroundColor(backColor)
         .frame(width: radius, height: radius, alignment: .center)
         .overlay(Image(systemName: imageName).foregroundColor(imageColor))
 }
 
-public func tnCircle(text: String, radius: CGFloat = 80, backColor: Color = .tin.opacity(0.8), textColor: Color? = nil) -> some View {
+public func tnCircle(text: String, radius: CGFloat = 80, backColor: Color = .appleTin.opacity(0.8), textColor: Color? = nil) -> some View {
     Circle()
         .foregroundColor(backColor)
         .frame(width: radius, height: radius, alignment: .center)
