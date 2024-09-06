@@ -216,42 +216,48 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
     }
     
-    private func receive() {
-        connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { [self] (data, _, isComplete, error) in
-            if let data = data, !data.isEmpty {
-                // receive data, add to queue
-                if let eom {
-                    dataQueue.append(data)
+    private func processReceived(_ data: Data?) {
+        if let data = data, !data.isEmpty {
+            // receive data, add to queue
+            if let eom {
+                dataQueue.append(data)
 
-                    var hasEom = false
-                    if dataQueue.count > eom.count {
-                        let eomAssume = dataQueue.suffix(eom.count)
-                        if eomAssume == eom {
-                            hasEom = true
-                        }
+                var hasEom = false
+                if dataQueue.count > eom.count {
+                    let eomAssume = dataQueue.suffix(eom.count)
+                    if eomAssume == eom {
+                        hasEom = true
                     }
-                    
-                    if hasEom {
-                        let receivedData = dataQueue.subdata(in: 0..<(dataQueue.count - eom.count))
-                        // reset data queue
-                        dataQueue.removeAll()
-                        logDebug("received", receivedData.count)
-                        self.delegate?.tnNetwork(self, receivedData: receivedData)
-                    }
-                } else {
-                    logDebug("received", data.count)
-                    self.delegate?.tnNetwork(self, receivedData: data)
                 }
-            }
-            
-            if isComplete {
-                // receive completed, that may be meant the connection is disconnected
-                self.stop(error: nil)
-            } else if let error = error {
-                self.stop(error: error)
+                
+                if hasEom {
+                    let receivedData = dataQueue.subdata(in: 0..<(dataQueue.count - eom.count))
+                    // reset data queue
+                    dataQueue.removeAll()
+                    logDebug("received", receivedData.count)
+                    delegate?.tnNetwork(self, receivedData: receivedData)
+                }
             } else {
-                // continue receive
-                self.receive()
+                logDebug("received", data.count)
+                delegate?.tnNetwork(self, receivedData: data)
+            }
+        }
+    }
+    
+    private func receive() {
+        queue.async { [self] in 
+            connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { [self] (data, _, isComplete, error) in
+                processReceived(data)
+                
+                if isComplete {
+                    // receive completed, that may be meant the connection is disconnected
+                    stop(error: nil)
+                } else if let error = error {
+                    stop(error: error)
+                } else {
+                    // continue receive
+                    receive()
+                }
             }
         }
     }
@@ -280,19 +286,21 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
     
     public func send(_ data: Data) {
-        sendChunk(data, completion: { [self] in
-            if let eom {
-                sendChunk(eom, completion: { [self] in
+        queue.async { [self] in
+            sendChunk(data, completion: { [self] in
+                if let eom {
+                    sendChunk(eom, completion: { [self] in
+                        // signal send
+                        logDebug("sent", data.count)
+                        self.delegate?.tnNetwork(self, sentData: data)
+                    })
+                } else {
                     // signal send
                     logDebug("sent", data.count)
                     self.delegate?.tnNetwork(self, sentData: data)
-                })
-            } else {
-                // signal send
-                logDebug("sent", data.count)
-                self.delegate?.tnNetwork(self, sentData: data)
-            }
-        })
+                }
+            })
+        }
     }
 }
 
