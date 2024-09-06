@@ -4,23 +4,23 @@
 import PackageDescription
 
 let package = Package(
-    name: "TnIosPackage",
+    name: "TnIosBase",
     platforms: [
         .iOS("15.4")
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "TnIosPackage",
-            targets: ["TnIosPackage"]),
+            name: "TnIosBase",
+            targets: ["TnIosBase"]),
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "TnIosPackage"),
+            name: "TnIosBase"),
         .testTarget(
-            name: "TnIosPackageTests",
-            dependencies: ["TnIosPackage"]),
+            name: "TnIosBaseTests",
+            dependencies: ["TnIosBase"]),
     ]
 )
