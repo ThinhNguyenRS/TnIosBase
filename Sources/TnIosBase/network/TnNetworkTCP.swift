@@ -216,26 +216,39 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
     }
     
+    private func findEom() -> Int {
+        guard let eom = self.eom, dataQueue.count >= eom.count else {
+            return -1
+        }
+        let eomCount = eom.count
+        var found = false
+        
+        var startIndex = dataQueue.count - eomCount
+        while !found && startIndex >= 0 {
+            let eomAssume = dataQueue[startIndex...(startIndex+eomCount-1)]
+            if eomAssume == eom {
+                found = true
+            } else {
+                startIndex -= 1
+            }
+        }
+        return found ? startIndex : -1
+    }
+    
     private func processReceived(_ data: Data?) {
         if let data = data, !data.isEmpty {
             // receive data, add to queue
             if let eom {
                 dataQueue.append(data)
-
-                var hasEom = false
-                if dataQueue.count > eom.count {
-                    let eomAssume = dataQueue.suffix(eom.count)
-                    if eomAssume == eom {
-                        hasEom = true
-                    }
-                }
                 
-                if hasEom {
-                    let receivedData = dataQueue.subdata(in: 0..<(dataQueue.count - eom.count))
-                    // reset data queue
-                    dataQueue.removeAll()
+                let eomIndex = findEom()
+                if eomIndex > -1 {
+                    let receivedData = dataQueue[0...eomIndex-1]
                     logDebug("received", receivedData.count)
                     delegate?.tnNetwork(self, receivedData: receivedData)
+
+                    // reset data queue
+                    dataQueue.removeSubrange(0...eomIndex+eom.count-1)
                 }
             } else {
                 logDebug("received", data.count)
