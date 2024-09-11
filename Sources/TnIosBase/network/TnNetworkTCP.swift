@@ -41,14 +41,16 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
     private var connectionsByID: [Int: TnNetworkConnectionServer] = [:]
     private let queue: DispatchQueue
     private let delegate: TnNetworkDelegateServer?
-    private let eom: Data?
+    private let EOM: Data
+    private let MTU: Int
 
-    public init(host: String, port: UInt16, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, eom: Data?) {
+    public init(host: String, port: UInt16, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, EOM: Data, MTU: Int) {
         self.host = host
         self.port = port
         self.queue = queue
         self.delegate = delegate
-        self.eom = eom
+        self.EOM = EOM
+        self.MTU = MTU
         
         listener = try! NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port)!)
         listener.parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!)
@@ -81,7 +83,7 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
     private func didAccept(nwConnection: NWConnection) {
         logDebug("accepting")
 
-        let connection = TnNetworkConnectionServer(nwConnection: nwConnection, queue: queue, delegate: self, eom: eom)
+        let connection = TnNetworkConnectionServer(nwConnection: nwConnection, queue: queue, delegate: self, EOM: EOM, MTU: MTU)
         self.connectionsByID[connection.id] = connection
         connection.start()
     }
@@ -149,7 +151,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     public let LOG_NAME = "TnNetworkConnection"
 
     //The TCP maximum package size is 64K 65536
-    let MTU = 64*1024
+    let MTU: Int
     
     public let host: String
     public let port: UInt16
@@ -157,28 +159,30 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private let delegate: TnNetworkDelegate?
     private let connection: NWConnection
     private let queue: DispatchQueue
-    private let eom: Data?
+    private let EOM: Data
     private var dataQueue: Data = .init()
     
-    public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, eom: Data?) {
+    public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.connection = nwConnection
         let hp = nwConnection.endpoint.getHostAndPort()
         self.host = hp.host
         self.port = hp.port
         self.queue = queue ?? DispatchQueue(label: "\(LOG_NAME).queue")
         self.delegate = delegate
-        self.eom = eom
+        self.EOM = EOM
+        self.MTU = MTU
         
         logDebug("inited", host, port)
     }
     
-    public init(host: String, port: UInt16, queue: DispatchQueue?, delegate: TnNetworkDelegate?, eom: Data?) {
+    public init(host: String, port: UInt16, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.host = host
         self.port = port
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
         self.queue = queue ?? DispatchQueue(label: "\(LOG_NAME).queue")
         self.delegate = delegate
-        self.eom = eom
+        self.EOM = EOM
+        self.MTU = MTU
 
         logDebug("inited", host, port)
     }
@@ -217,16 +221,16 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
     
     private func findEom() -> Int {
-        guard let eom = self.eom, dataQueue.count >= eom.count else {
+        guard dataQueue.count >= EOM.count else {
             return -1
         }
-        let eomCount = eom.count
+        let eomCount = EOM.count
         var found = false
         
         var startIndex = dataQueue.count - eomCount
         while !found && startIndex >= 0 {
             let eomAssume = dataQueue[startIndex...(startIndex+eomCount-1)]
-            if eomAssume == eom {
+            if eomAssume == EOM {
                 found = true
             } else {
                 startIndex -= 1
@@ -238,21 +242,16 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private func processReceived(_ data: Data?) {
         if let data = data, !data.isEmpty {
             // receive data, add to queue
-            if let eom {
-                dataQueue.append(data)
-                
-                let eomIndex = findEom()
-                if eomIndex > -1 {
-                    let receivedData = dataQueue[0...eomIndex-1]
-                    logDebug("received", receivedData.count)
-                    delegate?.tnNetwork(self, receivedData: receivedData)
+            dataQueue.append(data)
+            
+            let eomIndex = findEom()
+            if eomIndex > -1 {
+                let receivedData = dataQueue[0...eomIndex-1]
+                logDebug("received", receivedData.count)
+                delegate?.tnNetwork(self, receivedData: receivedData)
 
-                    // reset data queue
-                    dataQueue.removeSubrange(0...eomIndex+eom.count-1)
-                }
-            } else {
-                logDebug("received", data.count)
-                delegate?.tnNetwork(self, receivedData: data)
+                // reset data queue
+                dataQueue.removeSubrange(0...eomIndex+EOM.count-1)
             }
         }
     }
@@ -298,17 +297,11 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     
     public func send(_ data: Data) {
         sendChunk(data, completion: { [self] in
-            if let eom {
-                sendChunk(eom, completion: { [self] in
-                    // signal send
-                    logDebug("sent", data.count)
-                    self.delegate?.tnNetwork(self, sentData: data)
-                })
-            } else {
+            sendChunk(EOM, completion: { [self] in
                 // signal send
                 logDebug("sent", data.count)
                 self.delegate?.tnNetwork(self, sentData: data)
-            }
+            })
         })
     }
 }
@@ -317,10 +310,10 @@ public class TnNetworkConnectionServer: TnNetworkConnection {
     private static var nextID: Int = 0
     let id: Int
 
-    override init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, eom: Data?) {
+    override init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.id = Self.nextID
         Self.nextID += 1
-        super.init(nwConnection: nwConnection, queue: queue, delegate: delegate, eom: eom)
+        super.init(nwConnection: nwConnection, queue: queue, delegate: delegate, EOM: EOM, MTU: MTU)
     }
 }
 
