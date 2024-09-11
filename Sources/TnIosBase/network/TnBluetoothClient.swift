@@ -99,7 +99,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
     }
 
     public let LOG_NAME = "TnBluetoothClient"
-    private let info: TnBluetoothServiceInfo
+    private let info: TnNetworkServiceInfo
     private var centralManager: CBCentralManager!
     public private(set) var discoveredPeripherals: [CBPeripheral] = []
     public private(set) var connectedPeripherals: [CBPeripheral] = []
@@ -115,7 +115,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
     private static var sendingWorkerID = 0
     private var sendingWorkers: [SendingWorker] = []
 
-    public init(info: TnBluetoothServiceInfo, delegate: TnBluetoothClientDelegate? = nil) {
+    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothClientDelegate? = nil) {
         self.info = info
         self.delegate = delegate
     }
@@ -157,7 +157,7 @@ extension TnBluetoothClient: CBCentralManagerDelegate {
     public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
         // Reject if the signal strength is too low to attempt data transfer.
         // Change the minimum RSSI value depending on your app’s use case.
-        guard RSSI.intValue >= info.RssiMin else {
+        guard RSSI.intValue >= info.bleRssiMin else {
             TnLogger.debug(LOG_NAME, "Discovered perhiperal not in expected range, at", RSSI.intValue)
             return
         }
@@ -183,7 +183,7 @@ extension TnBluetoothClient: CBCentralManagerDelegate {
         peripheral.delegate = self
         
         // Search only for services that match our UUID
-        peripheral.discoverServices([info.serviceUUID])
+        peripheral.discoverServices([info.bleServiceUUID])
 
         connectedPeripherals.append(peripheral)
     }
@@ -205,9 +205,9 @@ extension TnBluetoothClient: CBPeripheralDelegate {
      *  The peripheral letting us know when services have been invalidated.
      */
     public func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
-        for service in invalidatedServices where service.uuid == info.serviceUUID {
+        for service in invalidatedServices where service.uuid == info.bleServiceUUID {
             TnLogger.debug(LOG_NAME, "Transfer service is invalidated - rediscover services")
-            peripheral.discoverServices([info.serviceUUID])
+            peripheral.discoverServices([info.bleServiceUUID])
         }
     }
 
@@ -228,7 +228,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         TnLogger.debug(LOG_NAME, "Discovered services:", peripheralServices.count)
 
         for service in peripheralServices {
-            peripheral.discoverCharacteristics([info.characteristicUUID], for: service)
+            peripheral.discoverCharacteristics([info.bleCharacteristicUUID], for: service)
         }
     }
     
@@ -250,7 +250,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         }
 
         TnLogger.debug(LOG_NAME, "Discovered characteristics:", serviceCharacteristics.count)
-        for characteristic in serviceCharacteristics where characteristic.uuid == info.characteristicUUID {
+        for characteristic in serviceCharacteristics where characteristic.uuid == info.bleCharacteristicUUID {
             // If it is, subscribe to it
             transferCharacteristic = characteristic
             peripheral.setNotifyValue(true, for: characteristic)
@@ -310,7 +310,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         }
         
         // Exit if it's not the transfer characteristic
-        guard characteristic.uuid == info.characteristicUUID else {
+        guard characteristic.uuid == info.bleCharacteristicUUID else {
             return
         }
         
@@ -348,7 +348,7 @@ extension TnBluetoothClient {
     }
     
     private func setup() {
-        let connectedPeripherals: [CBPeripheral] = (centralManager.retrieveConnectedPeripherals(withServices: [info.serviceUUID]))
+        let connectedPeripherals: [CBPeripheral] = (centralManager.retrieveConnectedPeripherals(withServices: [info.bleServiceUUID]))
         
         if !connectedPeripherals.isEmpty {
             for peripheral in connectedPeripherals {
@@ -357,7 +357,7 @@ extension TnBluetoothClient {
         } else {
             // We were not connected to our counterpart, so start scanning
             centralManager.scanForPeripherals(
-                withServices: [info.serviceUUID],
+                withServices: [info.bleServiceUUID],
                 options: [CBCentralManagerScanOptionAllowDuplicatesKey: true]
             )
         }
@@ -423,7 +423,7 @@ extension TnBluetoothClient {
 
             for service in (peripheral.services ?? [] as [CBService]) {
                 for characteristic in (service.characteristics ?? [] as [CBCharacteristic]) {
-                    if characteristic.uuid == info.characteristicUUID && characteristic.isNotifying {
+                    if characteristic.uuid == info.bleCharacteristicUUID && characteristic.isNotifying {
                         // It is notifying, so unsubscribe
                         peripheral.setNotifyValue(false, for: characteristic)
                     }

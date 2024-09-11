@@ -108,7 +108,7 @@ public class TnBluetoothServer: NSObject {
     }
     
     public let LOG_NAME: String = "TnBluetoothServer"
-    private let info: TnBluetoothServiceInfo
+    private let info: TnNetworkServiceInfo
     private var status: Status = .none
     
     private var peripheralManager: CBPeripheralManager?
@@ -122,11 +122,11 @@ public class TnBluetoothServer: NSObject {
 
     private var dataQueue: [String: Data] = [:]
 
-    public init(info: TnBluetoothServiceInfo, delegate: TnBluetoothServerDelegate? = nil) {
+    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothServerDelegate? = nil) {
         self.info = info
         self.delegate = delegate
         self.transferCharacteristic = CBMutableCharacteristic(
-            type: info.characteristicUUID,
+            type: info.bleCharacteristicUUID,
             properties: [.notify, .writeWithoutResponse],
             value: nil,
             permissions: [.readable, .writeable]
@@ -238,7 +238,7 @@ extension TnBluetoothServer {
         // Build our service.
         
         // Create a service from the characteristic.
-        let transferService = CBMutableService(type: info.serviceUUID, primary: true)
+        let transferService = CBMutableService(type: info.bleServiceUUID, primary: true)
         
         // Add the characteristic to the service.
         transferService.characteristics = [transferCharacteristic]
@@ -258,7 +258,7 @@ extension TnBluetoothServer {
         guard let peripheralManager else {
             return
         }
-        peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [info.serviceUUID]])
+        peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [info.bleServiceUUID]])
         
         status = .started
         TnLogger.debug(LOG_NAME, "started")
