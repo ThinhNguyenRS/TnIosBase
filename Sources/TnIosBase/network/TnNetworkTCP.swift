@@ -161,6 +161,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private let queue: DispatchQueue
     private let EOM: Data
     private var dataQueue: Data = .init()
+    private var sendingQueue: [Data] = []
     
     public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.connection = nwConnection
@@ -280,16 +281,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
     }
     
-    private func sendChunk(_ data: Data, completion: @escaping () -> Void) {
-        self.connection.send(content: data, completion: .contentProcessed( { error in
-            if let error = error {
-                self.stop(error: error)
-                return
-            }
-            completion()
-        }))
-    }
-
     public func start() {
         logDebug("starting")
 
@@ -303,14 +294,46 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         stop(error: nil)
     }
     
+    private func sendChunk(_ data: Data, completion: @escaping () -> Void) {
+        self.connection.send(content: data, completion: .contentProcessed( { error in
+            if let error = error {
+                self.stop(error: error)
+                return
+            }
+            completion()
+        }))
+    }
+    
+    private func startSend() {
+        if let data = sendingQueue.first {
+            sendChunk(data) { [self] in
+                sendingQueue.removeFirst()
+                startSend()
+            }
+        }
+    }
+
     public func send(_ data: Data) {
-        sendChunk(data, completion: { [self] in
-            sendChunk(EOM, completion: { [self] in
-                // signal send
-                logDebug("sent", data.count)
-                self.delegate?.tnNetwork(self, sentData: data)
-            })
-        })
+        var dataToSend = data
+        dataToSend.append(EOM)
+        sendingQueue.append(dataToSend)
+        
+        startSend()
+
+//        if sendingQueue.count == 1 {
+//            TnLogger.debug(LOG_NAME, "sending data", dataTosend.count)
+//            self.socket.write(dataTosend, withTimeout: -1, tag: 0)
+//        } else {
+//            TnLogger.debug(LOG_NAME, "queueing data", dataTosend.count, sendingQueue.count)
+//        }
+
+//        sendChunk(data, completion: { [self] in
+//            sendChunk(EOM, completion: { [self] in
+//                // signal send
+//                logDebug("sent", data.count)
+//                self.delegate?.tnNetwork(self, sentData: data)
+//            })
+//        })
     }
 }
 
