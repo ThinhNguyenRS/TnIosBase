@@ -250,7 +250,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                 // reset data queue
                 dataQueue.removeSubrange(0...eomIndex+EOM.count-1)
 
-                logDebug("received", receivedData.count)
+                logDebug("received", receivedData.count, "remain", dataQueue.count)
                 delegate?.tnNetwork(self, receivedData: receivedData)
             }
         }

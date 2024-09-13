@@ -14,7 +14,7 @@ public protocol TnTransportableProtocol: TnLoggable {
 
 extension TnTransportableProtocol {
     public func send(msg: TnMessage) {
-        TnLogger.debug(LOG_NAME, "send", msg.typeCode)
+        TnLogger.debug(LOG_NAME, "send typeCode", msg.typeCode)
         self.send(msg.data)
     }
     
