@@ -257,13 +257,13 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             if eomIndex > -1 {
                 let receivedData = dataQueue[0...eomIndex-1]
                 
-                // TODO: cheat code: split received data again to make sure there's no EOM in the middle
-                let parts = receivedData.split(separator: EOM)
-                for part in parts {
-                    delegate?.tnNetwork(self, receivedData: part)
-                }
+//                // TODO: cheat code: split received data again to make sure there's no EOM in the middle
+//                let parts = receivedData.split(separator: EOM)
+//                for part in parts {
+//                    delegate?.tnNetwork(self, receivedData: part)
+//                }
 
-//                delegate?.tnNetwork(self, receivedData: receivedData)
+                delegate?.tnNetwork(self, receivedData: receivedData)
 
                 // reset data queue
                 dataQueue.removeSubrange(0...eomIndex+EOM.count-1)
