@@ -257,12 +257,9 @@ extension UIImage {
         if scale == 1 {
             return self
         }
-        let newWidth = self.size.width * scale
-        let newHeight = self.size.height * scale
-        let newSize = CGSize(width: newWidth, height: newHeight)
+        let newSize = CGSize(width: self.size.width * scale, height: self.size.height * scale)
         
         let renderer = UIGraphicsImageRenderer(size: newSize)
-        
         let newImage = renderer.image { (context) in
             self.draw(in: CGRect(origin: CGPoint(x: 0, y: 0), size: newSize))
         }
@@ -273,14 +270,7 @@ extension UIImage {
         if self.size.width == newWidth {
             return self
         }
-        
-        let scale = newWidth / self.size.width
-        let newHeight = self.size.height * scale
-        UIGraphicsBeginImageContext(CGSize(width: newWidth, height: newHeight))
-        self.draw(in: CGRect(x: 0, y: 0, width: newWidth, height: newHeight))
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-        return newImage!
+        return self.scale(scale: newWidth/self.size.width)
     }
     
     public func jpegData(scale: CGFloat, compressionQuality: CGFloat) -> Data {
@@ -288,8 +278,7 @@ extension UIImage {
     }
     
     public func jpegData(maxWidth: CGFloat, compressionQuality: CGFloat) -> Data {
-        let scale = maxWidth > 0 ? maxWidth/self.size.width : 1
-        return self.scale(scale: scale).jpegData(compressionQuality: compressionQuality)!
+        return self.scale(newWidth: maxWidth).jpegData(compressionQuality: compressionQuality)!
     }
 }
 
