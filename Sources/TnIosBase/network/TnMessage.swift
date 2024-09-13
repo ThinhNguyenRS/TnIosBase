@@ -39,8 +39,7 @@ public struct TnMessage {
             let decoder = JSONDecoder()
             return try decoder.decode(T.self, from: jsonData) as T
         } catch {
-            let jsonString = String(data: jsonData, encoding: .utf8)
-            TnLogger.error("TnMessage", "Cannot decode to", T.self, jsonString, error.localizedDescription)
+            TnLogger.error("TnMessage", "Cannot decode to", T.self, error.localizedDescription)
         }
         return nil
     }
