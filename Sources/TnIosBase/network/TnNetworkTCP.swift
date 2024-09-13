@@ -307,21 +307,24 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private func startSend() {
         if let data = sendingQueue.first {
             sendChunk(data) { [self] in
-                if !sendingQueue.isEmpty {
-                    sendingQueue.removeFirst()
-                    startSend()
-                }
+                sendingQueue.removeFirst()
+                startSend()
+//                if !sendingQueue.isEmpty {
+//                    sendingQueue.removeFirst()
+//                    startSend()
+//                }
             }
         }
     }
 
     public func send(_ data: Data) {
-        var dataToSend = data
-        dataToSend.append(EOM)
-        sendingQueue.append(dataToSend)
-        
-        startSend()
-
+        queue.sync {
+            var dataToSend = data
+            dataToSend.append(EOM)
+            sendingQueue.append(dataToSend)
+            
+            startSend()
+        }
 //        if sendingQueue.count == 1 {
 //            TnLogger.debug(LOG_NAME, "sending data", dataTosend.count)
 //            self.socket.write(dataTosend, withTimeout: -1, tag: 0)
