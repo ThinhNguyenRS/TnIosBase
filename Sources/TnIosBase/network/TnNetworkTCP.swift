@@ -318,7 +318,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
 
     public func send(_ data: Data) {
-        queue.sync {
+        queue.async { [self] in
             var dataToSend = data
             dataToSend.append(EOM)
             sendingQueue.append(dataToSend)
