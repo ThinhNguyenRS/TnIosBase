@@ -283,13 +283,13 @@ extension UIImage {
         return newImage!
     }
     
-    public func jpegData(scale: Double, compressionQuality: CGFloat) -> Data? {
-        self.scale(scale: scale).jpegData(compressionQuality: compressionQuality)
+    public func jpegData(scale: Double, compressionQuality: CGFloat) -> Data {
+        self.scale(scale: scale).jpegData(compressionQuality: compressionQuality)!
     }
 }
 
 extension CIImage {
-    public func jpegData(scale: Double, compressionQuality: CGFloat) -> Data? {
+    public func jpegData(scale: Double, compressionQuality: CGFloat) -> Data {
         UIImage(ciImage: self).jpegData(scale: scale, compressionQuality: compressionQuality)
     }
     
