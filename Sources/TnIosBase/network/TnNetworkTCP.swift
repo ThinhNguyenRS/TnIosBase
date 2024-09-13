@@ -307,8 +307,10 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private func startSend() {
         if let data = sendingQueue.first {
             sendChunk(data) { [self] in
-                sendingQueue.removeFirst()
-                startSend()
+                if !sendingQueue.isEmpty {
+                    sendingQueue.removeFirst()
+                    startSend()
+                }
             }
         }
     }
