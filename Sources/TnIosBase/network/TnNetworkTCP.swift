@@ -246,7 +246,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             
             let eomIndex = findEom()
             if eomIndex > -1 {
-                let receivedData = dataQueue[0...eomIndex-1]
+                let receivedData = dataQueue[0...eomIndex]
                 logDebug("received", receivedData.count)
                 delegate?.tnNetwork(self, receivedData: receivedData)
 
