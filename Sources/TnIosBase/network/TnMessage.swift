@@ -43,6 +43,11 @@ public struct TnMessage {
         }
         return nil
     }
+    
+    public func jsonString() -> String {
+        let jsonData = data.suffix(from: 1)
+        return String(data: jsonData, encoding: .utf8)!
+    }
 }
 
 extension TnMessageProtocol {
