@@ -102,7 +102,7 @@ class TnDbSqlite: TnDb {
             }
             sqlite3_finalize(statement)
         }
-        TnLogger.info(dbPath, "queryMulti", sql, ret.count)
+        TnLogger.debug(dbPath, "queryMulti", sql, ret.count)
 
         return ret
     }
@@ -130,7 +130,7 @@ class TnDbSqlite: TnDb {
             sqlite3_finalize(statement)
         }
         
-        TnLogger.info(dbPath, "querySingle", sql, ret != nil ? 1 : 0)
+        TnLogger.debug(dbPath, "querySingle", sql, ret != nil ? 1 : 0)
 
         return ret
     }
@@ -191,7 +191,7 @@ class TnDbSqlite: TnDb {
             }
         }
         
-        TnLogger.info(dbPath, "execute", sql, affectedCount)
+        TnLogger.debug(dbPath, "execute", sql, affectedCount)
         
         return affectedCount
     }

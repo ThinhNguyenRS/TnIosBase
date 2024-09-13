@@ -14,7 +14,7 @@ public class TnLogger {
         public static func < (lhs: TnLogger.LogLevel, rhs: TnLogger.LogLevel) -> Bool {
             lhs.rawValue < rhs.rawValue
         }
-        case info, debug, warning, error
+        case debug, warning, error
     }
     public static var logLevel: LogLevel = .debug
         
@@ -33,9 +33,6 @@ public class TnLogger {
         }
     }
 
-    public static func info(_ name: String, showDate: Bool = true, _ items: Any?...) {
-        _log(.info, name, showDate: showDate, items)
-    }
     public static func debug(_ name: String, showDate: Bool = true, _ items: Any?...) {
         _log(.debug, name, showDate: showDate, items)
     }

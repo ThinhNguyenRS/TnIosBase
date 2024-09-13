@@ -43,7 +43,7 @@ class TnSystem: NSObject, ObservableObject {
     @Published var activeLanguageIndex: Int = 0 {
         didSet {
             activeLanguageCode = languageCodes[activeLanguageIndex]
-            TnLogger.info("System", "setActiveLanguage", activeLanguageIndex, activeLanguageCode)
+            TnLogger.debug("System", "setActiveLanguage", activeLanguageIndex, activeLanguageCode)
         }
     }
 
@@ -85,7 +85,7 @@ class TnSystem: NSObject, ObservableObject {
                 activeColorScheme = .light
             }
 
-            TnLogger.info("System", "setActiveColorScheme", activeColorSchemeType, activeColorScheme)
+            TnLogger.debug("System", "setActiveColorScheme", activeColorSchemeType, activeColorScheme)
         }
     }
 }
