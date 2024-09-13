@@ -256,11 +256,13 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             let eomIndex = findEom()
             if eomIndex > -1 {
                 let receivedData = dataQueue[0...eomIndex-1]
+                // TODO: cheat code: split received data again to make sure there's no EOM in the middle
+                let parts = receivedData.split(separator: EOM)
+                for part in parts {
+                    delegate?.tnNetwork(self, receivedData: part)
+                }
                 // reset data queue
                 dataQueue.removeSubrange(0...eomIndex+EOM.count-1)
-
-                logDebug("received", receivedData.count, "remain", dataQueue.count)
-                delegate?.tnNetwork(self, receivedData: receivedData)
             }
         }
     }
