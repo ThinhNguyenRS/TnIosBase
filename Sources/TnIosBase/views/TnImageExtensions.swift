@@ -275,11 +275,15 @@ extension UIImage {
     }
     
     public func jpegData(scale: CGFloat, compressionQuality: CGFloat) -> Data {
-        self.scale(scale: scale).jpegData(compressionQuality: compressionQuality)!
+        let image = self.scale(scale: scale)
+        TnLogger.debug("UIImage", "scale", self.size, image.size)
+        return image.jpegData(compressionQuality: compressionQuality)!
     }
     
     public func jpegData(maxWidth: CGFloat, compressionQuality: CGFloat) -> Data {
-        return self.scale(newWidth: maxWidth).jpegData(compressionQuality: compressionQuality)!
+        let image = self.scale(newWidth: maxWidth)
+        TnLogger.debug("UIImage", "scale", self.size, image.size)
+        return image.jpegData(compressionQuality: compressionQuality)!
     }
 }
 
