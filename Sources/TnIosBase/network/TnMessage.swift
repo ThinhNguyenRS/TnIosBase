@@ -11,6 +11,12 @@ public protocol TnMessageProtocol: Codable {
     var typeCode: UInt8 { get }
 }
 
+extension TnMessageProtocol {
+    public func toMessage() throws -> TnMessage {
+        try TnMessage(object: self)
+    }
+}
+
 public struct TnMessage {
     private(set) var data: Data
     public var typeCode: UInt8 {
@@ -21,19 +27,20 @@ public struct TnMessage {
         self.data = data
     }
     
-    public init?<T: TnMessageProtocol>(object: T) {
+    public init<T: TnMessageProtocol>(object: T) throws {
         do {
-            let data = try object.toJsonData()
             self.data = Data()
             self.data.append(object.typeCode)
-            self.data.append(data)
+            
+            let jsonData = try object.toJsonData()
+            self.data.append(jsonData)
         } catch {
-            TnLogger.error("TnMessage", "Cannot encode from", T.self, object, error.localizedDescription)
-            return nil
+            TnLogger.error("TnMessage", "Cannot encode from", T.self, error.localizedDescription)
+            throw error
         }
     }
     
-    public func toObject<T: Decodable>() -> T? {
+    public func toObject<T: Codable>() -> T? {
         let jsonData = data.suffix(from: 1)
         do {
             let decoder = JSONDecoder()
@@ -47,17 +54,5 @@ public struct TnMessage {
     public func jsonString() -> String {
         let jsonData = data.suffix(from: 1)
         return String(data: jsonData, encoding: .utf8)!
-    }
-}
-
-extension TnMessageProtocol {
-    public func toMessage() -> TnMessage {
-        TnMessage(object: self)!
-    }
-}
-
-extension Data {
-    public func toMessage() -> TnMessage {
-        TnMessage(data: self)
     }
 }

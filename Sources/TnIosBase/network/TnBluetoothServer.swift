@@ -301,8 +301,8 @@ extension TnBluetoothServer {
         self.send(data: msg.data, centralIDs: centralIDs)
     }
     
-    public func send(object: TnMessageProtocol, centralIDs: [String]? = nil) {
-        self.send(msg: object.toMessage(), centralIDs: centralIDs)
+    public func send(object: TnMessageProtocol, centralIDs: [String]? = nil) throws {
+        self.send(msg: try object.toMessage(), centralIDs: centralIDs)
     }
 }
 

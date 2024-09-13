@@ -18,8 +18,8 @@ extension TnTransportableProtocol {
         self.send(msg.data)
     }
     
-    public func send(object: TnMessageProtocol) {
-        self.send(msg: object.toMessage())
+    public func send(object: TnMessageProtocol) throws {
+        self.send(msg: try object.toMessage())
     }
 }
 

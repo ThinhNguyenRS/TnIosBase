@@ -441,8 +441,8 @@ extension TnBluetoothClient {
         self.send(data: msg.data, peripheralIDs: peripheralIDs)
     }
     
-    public func send(object: TnMessageProtocol, peripheralIDs: [String]? = nil) {
-        self.send(msg: object.toMessage(), peripheralIDs: peripheralIDs)
+    public func send(object: TnMessageProtocol, peripheralIDs: [String]? = nil) throws {
+        self.send(msg: try object.toMessage(), peripheralIDs: peripheralIDs)
     }
 }
 
