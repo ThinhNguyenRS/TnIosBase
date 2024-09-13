@@ -256,11 +256,15 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             let eomIndex = findEom()
             if eomIndex > -1 {
                 let receivedData = dataQueue[0...eomIndex-1]
-                // TODO: cheat code: split received data again to make sure there's no EOM in the middle
-                let parts = receivedData.split(separator: EOM)
-                for part in parts {
-                    delegate?.tnNetwork(self, receivedData: part)
-                }
+                
+//                // TODO: cheat code: split received data again to make sure there's no EOM in the middle
+//                let parts = receivedData.split(separator: EOM)
+//                for part in parts {
+//                    delegate?.tnNetwork(self, receivedData: part)
+//                }
+
+                delegate?.tnNetwork(self, receivedData: receivedData)
+
                 // reset data queue
                 dataQueue.removeSubrange(0...eomIndex+EOM.count-1)
             }
@@ -296,7 +300,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         stop(error: nil)
     }
     
-    private func sendChunk(_ data: Data, completion: @escaping () -> Void) {
+    private func sendChunk(_ data: Data?, completion: @escaping () -> Void) {
         self.connection.send(content: data, completion: .contentProcessed( { error in
             if let error = error {
                 self.stop(error: error)
@@ -306,7 +310,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }))
     }
     
-    private func startSend() {
+    private func startSendQueue() {
         if let data = sendingQueue.first {
             sendChunk(data) { [self] in
                 if !sendingQueue.isEmpty {
@@ -315,34 +319,35 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
 //                sendingQueue.removeFirst()
                 if !sendingQueue.isEmpty {
                     Thread.sleep(forTimeInterval: 0.1)
-                    startSend()
+                    startSendQueue()
                 }
             }
         }
     }
 
+    private func sendByQueue(_ data: Data) {
+        // send using queue
+        var dataToSend = data
+        dataToSend.append(EOM)
+        sendingQueue.append(dataToSend)
+        startSendQueue()
+    }
+    
+    private func sendNoQueue(_ data: Data) {
+        // send without queue
+        sendChunk(data, completion: { [self] in
+            sendChunk(EOM, completion: { [self] in
+                sendChunk(nil) { [self] in
+                    // signal send
+                    logDebug("sent", data.count)
+                    self.delegate?.tnNetwork(self, sentData: data)
+                }
+            })
+        })
+    }
+    
     public func send(_ data: Data) {
-        queue.async { [self] in
-            var dataToSend = data
-            dataToSend.append(EOM)
-            sendingQueue.append(dataToSend)
-            
-            startSend()
-        }
-//        if sendingQueue.count == 1 {
-//            TnLogger.debug(LOG_NAME, "sending data", dataTosend.count)
-//            self.socket.write(dataTosend, withTimeout: -1, tag: 0)
-//        } else {
-//            TnLogger.debug(LOG_NAME, "queueing data", dataTosend.count, sendingQueue.count)
-//        }
-
-//        sendChunk(data, completion: { [self] in
-//            sendChunk(EOM, completion: { [self] in
-//                // signal send
-//                logDebug("sent", data.count)
-//                self.delegate?.tnNetwork(self, sentData: data)
-//            })
-//        })
+        self.sendNoQueue(data)
     }
 }
 
