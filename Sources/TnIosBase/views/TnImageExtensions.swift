@@ -267,10 +267,11 @@ extension UIImage {
     }
     
     public func scale(newWidth: CGFloat) -> UIImage {
-        if self.size.width == newWidth {
+        let width = max(self.size.width, self.size.height)
+        if width == newWidth {
             return self
         }
-        return self.scale(scale: newWidth/self.size.width)
+        return self.scale(scale: newWidth/width)
     }
     
     public func jpegData(scale: CGFloat, compressionQuality: CGFloat) -> Data {
