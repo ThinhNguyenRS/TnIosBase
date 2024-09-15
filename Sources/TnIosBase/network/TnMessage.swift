@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import BinaryCodable
 
 public protocol TnMessageProtocol: Codable {
     var typeCode: UInt8 { get }
@@ -32,8 +33,12 @@ public struct TnMessage {
             self.data = Data()
             self.data.append(object.typeCode)
             
-            let jsonData = try object.toJsonData()
-            self.data.append(jsonData)
+            let encoder = BinaryEncoder()
+            let encodedData = try encoder.encode(object)
+            self.data.append(encodedData)
+
+//            let encodedData = try object.toJsonData()
+//            self.data.append(encodedData)
         } catch {
             TnLogger.error("TnMessage", "Cannot encode from", T.self, error.localizedDescription)
             throw error
@@ -41,18 +46,22 @@ public struct TnMessage {
     }
     
     public func toObject<T: Codable>() -> T? {
-        let jsonData = data.suffix(from: 1)
+        let encodedData = data.suffix(from: 1)
         do {
-            let decoder = JSONDecoder()
-            return try decoder.decode(T.self, from: jsonData) as T
+
+            let decoder = BinaryDecoder()
+            return try decoder.decode(T.self, from: encodedData) as T
+
+//            let decoder = JSONDecoder()
+//            return try decoder.decode(T.self, from: encodedData) as T
         } catch {
             TnLogger.error("TnMessage", "Cannot decode to", T.self, error.localizedDescription)
         }
         return nil
     }
     
-    public func jsonString() -> String {
-        let jsonData = data.suffix(from: 1)
-        return String(data: jsonData, encoding: .utf8)!
-    }
+//    public func jsonString() -> String {
+//        let jsonData = data.suffix(from: 1)
+//        return String(data: jsonData, encoding: .utf8)!
+//    }
 }
