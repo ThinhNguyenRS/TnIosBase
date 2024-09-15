@@ -250,8 +250,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             stop(error: error)
             success = false
         } else if result.isComplete {
-//            stop(error: nil)
-//            success = false
+            stop(error: nil)
+            success = false
         }
         
         guard success else {
@@ -259,7 +259,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
                 
         if let data = result.content, !data.isEmpty {
-            logDebug("receiving", data.count)
+//            logDebug("receiving", data.count)
             
             // receive data, add to queue
             dataQueue.append(data)
@@ -272,8 +272,12 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                     let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
                     // reset data queue
                     dataQueue.removeAll()
-                    // signal
-                    delegate?.tnNetwork(self, receivedData: receivedData)
+
+                    let parts = receivedData.split(separator: EOM)
+                    for part in parts {
+                        // signal
+                        delegate?.tnNetwork(self, receivedData: part)
+                    }
                 }
             }
         }
