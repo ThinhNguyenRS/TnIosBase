@@ -262,10 +262,12 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                     if eomAssume == EOM {
                         // get received data
                         let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
+                        parts = receivedData.split(separator: EOM).map { p in
+                            p.suffix(from: 0)
+                        }
+
                         // reset data queue
                         dataQueue.removeAll()
-
-                        parts = receivedData.split(separator: EOM)
                     }
                 }
             }
@@ -280,12 +282,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             while connection.state == .ready {
                 if let parts = try await receiveAsync() {
                     for part in parts {
-                        if part.isEmpty {
-                            logError("wow, it is empty")
-                        } else {
-                            // signal
-                            delegate?.tnNetwork(self, receivedData: part)
-                        }
+                        // signal
+                        delegate?.tnNetwork(self, receivedData: part)
                     }
                 }
                 
