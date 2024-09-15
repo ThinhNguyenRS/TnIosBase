@@ -354,7 +354,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                 let eomAssume = dataQueue.suffix(EOM.count)
                 if eomAssume == EOM {
                     // get received data
-                    let receivedData = dataQueue[0...dataQueue.count-EOM.count]
+                    let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
                     // reset data queue
                     dataQueue.removeAll()
                     // signal
