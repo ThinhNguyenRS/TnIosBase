@@ -180,7 +180,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         self.EOM = EOM
         self.MTU = MTU
         
-        logDebug("inited incoming", host, "MTU", MTU, "maximumDatagramSize", connection.maximumDatagramSize)
+        logDebug("inited incoming", host)
     }
     
     public init(host: String, port: UInt16, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
@@ -192,7 +192,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         self.EOM = EOM
         self.MTU = MTU
         
-        logDebug("inited client", host, "MTU", MTU, "maximumDatagramSize", connection.maximumDatagramSize)
+        logDebug("inited client", host, "MTU")
     }
     
     deinit {
@@ -211,9 +211,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         
         switch state {
         case .ready:
-            logDebug("ready")
+            logDebug("ready", "maximumDatagramSize", connection.maximumDatagramSize)
             startReceiveAsync()
-            
             delegate?.tnNetworkReady(self)
         case .waiting(let error):
             logDebug("waiting", error)
