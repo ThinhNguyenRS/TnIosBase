@@ -214,6 +214,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
     
     private func onStateChanged(to state: NWConnection.State) {
+        logDebug("state changed", state)
+        
         switch state {
         case .ready:
             logDebug("ready")
@@ -230,7 +232,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             stop(error: error)
         case .cancelled:
             logDebug("cancelled")
-            stop(error: nil)
+//            stop(error: nil)
         default:
             break
         }
