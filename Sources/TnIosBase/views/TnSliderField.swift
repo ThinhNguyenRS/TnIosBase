@@ -130,14 +130,35 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
     let specifier: String
     let formatter: ((TValue) -> String)?
     let onEdited: ((TValue) -> Void)?
+
+    private let adjustBounds: Bool
+    private let minText: String
+    private let maxText: String
     
-    public init(value: Binding<TValue>, bounds: ClosedRange<TValue>, step: TValue.Stride, specifier: String = "%.1f", formatter: ((TValue) -> String)? = nil, onEdited: ((TValue) -> Void)? = nil) {
+    public init(value: Binding<TValue>, bounds: ClosedRange<TValue>, step: TValue.Stride, specifier: String = "%.1f", formatter: ((TValue) -> String)? = nil, onEdited: ((TValue) -> Void)? = nil, adjustBounds: Bool = false) {
         self.value = value
         self.bounds = bounds
         self.step = step
         self.specifier = specifier
         self.formatter = formatter
         self.onEdited = onEdited
+        self.adjustBounds = adjustBounds
+        
+        var minVal: TValue, maxVal: TValue
+        if adjustBounds {
+            minVal = 0
+            maxVal = bounds.upperBound - bounds.lowerBound
+        } else {
+            minVal = bounds.lowerBound
+            maxVal = bounds.upperBound
+        }
+        self.minText = minVal.toString(specifier)
+        self.maxText = maxVal.toString(specifier)
+    }
+    
+    var valueText: String {
+        let v = adjustBounds ? value.wrappedValue : value.wrappedValue - bounds.lowerBound
+        return v.toString(specifier)
     }
     
     public var body: some View {
@@ -145,9 +166,9 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
             value: value,
             in: bounds,
             step: step,
-            label: { Text(value.wrappedValue.toString(specifier)) },
-            minimumValueLabel: {Text(bounds.lowerBound.toString(specifier))},
-            maximumValueLabel: {Text(bounds.upperBound.toString(specifier))}
+            label: { Text(valueText) },
+            minimumValueLabel: {Text(minText)},
+            maximumValueLabel: {Text(maxText)}
         ) { editing in
             if !editing {
                 onEdited?(value.wrappedValue)
