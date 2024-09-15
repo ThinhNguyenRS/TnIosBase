@@ -276,6 +276,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     
     private func startReceiveAsync() {
         Task {
+            let sleepNanos: UInt64 = 10*1000*1000
             while connection.state == .ready {
                 if let parts = try await receiveAsync() {
                     for part in parts {
@@ -287,6 +288,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                         }
                     }
                 }
+                
+                try await Task.sleep(nanoseconds: sleepNanos)
             }
         }
     }
