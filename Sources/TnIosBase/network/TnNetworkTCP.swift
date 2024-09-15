@@ -168,7 +168,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private let queue: DispatchQueue
     private let EOM: Data
     private var dataQueue: Data = .init()
-    private var sendingQueue: [Data] = []
+    
+    private var receiving = false
     
     public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.connection = nwConnection
@@ -201,6 +202,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     
     
     private func stop(error: Error?) {
+        receiving = false
         connection.stateUpdateHandler = nil
         connection.cancel()
         delegate?.tnNetworkStop(self, error: error)
@@ -238,56 +240,54 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
     }
 
-    private func receiveAsync() async throws {
-        guard connection.state == .ready else {
-            return
-        }
-
+    private func receiveAsync() async throws -> [Data]? {
         let result = await receiveChunkAsync()
         
-        var success = true
+        var parts: [Data]? = nil
+        
         if let error = result.error {
             stop(error: error)
-            success = false
+            throw TnAppError.general(message: "Receive error: \(error.localizedDescription)")
         } else if result.isComplete {
             stop(error: nil)
-            success = false
-        }
-        
-        guard success else {
-            throw TnAppError.general(message: "Cannot receive data")
-        }
+            throw TnAppError.general(message: "Receive error: The connection is closed")
+        } else {
+            if let data = result.content, !data.isEmpty {
+                // receive data, add to queue
+                dataQueue.append(data)
                 
-        if let data = result.content, !data.isEmpty {
-//            logDebug("receiving", data.count)
-            
-            // receive data, add to queue
-            dataQueue.append(data)
-            
-            // detect EOM
-            if dataQueue.count > EOM.count {
-                let eomAssume = dataQueue.suffix(EOM.count)
-                if eomAssume == EOM {
-                    // get received data
-                    let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
-                    // reset data queue
-                    dataQueue.removeAll()
+                // detect EOM
+                if dataQueue.count > EOM.count {
+                    let eomAssume = dataQueue.suffix(EOM.count)
+                    if eomAssume == EOM {
+                        // get received data
+                        let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
+                        // reset data queue
+                        dataQueue.removeAll()
 
-                    let parts = receivedData.split(separator: EOM)
-                    for part in parts {
-                        // signal
-                        delegate?.tnNetwork(self, receivedData: part)
+                        parts = receivedData.split(separator: EOM)
                     }
                 }
             }
         }
-        // continue to receive
-        try await receiveAsync()
+        
+        return parts
     }
     
     private func startReceiveAsync() {
         Task {
-            try? await receiveAsync()
+            while connection.state == .ready {
+                if let parts = try await receiveAsync() {
+                    for part in parts {
+                        if part.isEmpty {
+                            logError("wow, it is empty")
+                        } else {
+                            // signal
+                            delegate?.tnNetwork(self, receivedData: part)
+                        }
+                    }
+                }
+            }
         }
     }
 
