@@ -432,20 +432,22 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         })
     }
     
-    private func sendAsync(_ data: Data, withEOM: Bool = false) async {
+    private func sendAsync(_ data: Data, withEOM: Bool = false) async throws {
         // append EOM
         var dataToSend = data
         if withEOM {
             dataToSend.append(EOM)
         }
         
-        return await withCheckedContinuation { continuation in
+        return try await withCheckedThrowingContinuation { continuation in
             self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: Void())
                 }
-                continuation.resume(returning: Void())
             }))
         }
     }
@@ -458,7 +460,11 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
         
         Task {
-            await sendAsync(data, withEOM: true)
+            do {
+                try await sendAsync(data, withEOM: true)
+                logDebug("sent", data.count)
+            } catch {
+            }
         }
     }
     
