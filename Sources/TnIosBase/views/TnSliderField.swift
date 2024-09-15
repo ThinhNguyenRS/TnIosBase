@@ -127,17 +127,15 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
     let value: Binding<TValue>
     let bounds: ClosedRange<TValue>
     let step: TValue.Stride
-    let specifier: String
     let formatter: (TValue) -> String
     let onEdited: ((TValue) -> Void)?
     private let adjustBounds: Bool
     
-    public init(value: Binding<TValue>, bounds: ClosedRange<TValue>, step: TValue.Stride, specifier: String = "%.1f", formatter: ((TValue) -> String)? = nil, onEdited: ((TValue) -> Void)? = nil, adjustBounds: Bool = false) {
+    public init(value: Binding<TValue>, bounds: ClosedRange<TValue>, step: TValue.Stride, formatter: @escaping (TValue) -> String, onEdited: ((TValue) -> Void)? = nil, adjustBounds: Bool = false) {
         self.value = value
         self.bounds = bounds
         self.step = step
-        self.specifier = specifier
-        self.formatter = formatter ?? { (v: TValue) in v.toString(specifier)}
+        self.formatter = formatter
         self.onEdited = onEdited
         self.adjustBounds = adjustBounds
     }
@@ -153,7 +151,7 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
     }
 
     var maxText: String {
-        let v = adjustBounds ? 0 : bounds.upperBound - bounds.lowerBound
+        let v = adjustBounds ? bounds.upperBound - bounds.lowerBound : bounds.upperBound
         return self.formatter(v)
     }
 
