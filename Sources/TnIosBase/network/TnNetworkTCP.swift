@@ -147,6 +147,17 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 }
 
+public enum TnNetworkConnectionStatus: Codable {
+    case none, ready, stopped
+}
+
+public struct TnNetworkReceiveData {
+    public let content: Data?
+    public let context: NWConnection.ContentContext?
+    public let isComplete: Bool
+    public let error: NWError?
+}
+
 public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     public let LOG_NAME = "TnNetworkConnection"
     
@@ -162,6 +173,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private let EOM: Data
     private var dataQueue: Data = .init()
     private var sendingQueue: [Data] = []
+    private var status: TnNetworkConnectionStatus = .none
     
     public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.connection = nwConnection
@@ -196,6 +208,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private func stop(error: Error?) {
         connection.stateUpdateHandler = nil
         connection.cancel()
+        status = .stopped
         
         delegate?.tnNetworkStop(self, error: error)
     }
@@ -204,9 +217,11 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         switch state {
         case .ready:
             logDebug("ready")
-            //            receive()
-            delegate?.tnNetworkReady(self)
             
+            status = .ready
+            startReceiveAsync()
+            
+            delegate?.tnNetworkReady(self)
         case .waiting(let error):
             logDebug("waiting", error)
             stop(error: error)
@@ -304,6 +319,59 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
 //        }
     }
     
+    private func receiveChunkAsync() async -> TnNetworkReceiveData {
+        return await withCheckedContinuation { continuation in
+            connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { content, context, isComplete, error in
+                continuation.resume(returning: TnNetworkReceiveData(
+                    content: content, context: context, isComplete: isComplete, error: error)
+                )
+            }
+        }
+    }
+
+    private func receiveAsync() async throws {
+        let result = await receiveChunkAsync()
+        
+        var success = true
+        if let error = result.error {
+            stop(error: error)
+            success = false
+        } else if result.isComplete {
+            stop(error: nil)
+            success = false
+        }
+        
+        guard success else {
+            throw TnAppError.general(message: "Cannot receive data")
+        }
+                
+        if let data = result.content, !data.isEmpty {
+            // receive data, add to queue
+            dataQueue.append(data)
+            
+            // detect EOM
+            if dataQueue.count > EOM.count {
+                let eomAssume = dataQueue.suffix(EOM.count)
+                if eomAssume == EOM {
+                    // get received data
+                    let receivedData = dataQueue[0...dataQueue.count-EOM.count]
+                    // reset data queue
+                    dataQueue.removeAll()
+                    // signal
+                    delegate?.tnNetwork(self, receivedData: receivedData)
+                }
+            }
+        }
+        // continue to receive
+        try await receiveAsync()
+    }
+    
+    private func startReceiveAsync() {
+        Task {
+            try? await receiveAsync()
+        }
+    }
+
     private func sendChunk(_ data: Data?, completion: @escaping () -> Void) {
         self.connection.send(content: data, completion: .contentProcessed( { [self] error in
             if let error = error {
@@ -343,6 +411,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         var dataToSend = data
         dataToSend.append(EOM)
         
+        
         // send the data
         self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
             if let error = error {
@@ -363,16 +432,40 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         })
     }
     
+    private func sendAsync(_ data: Data, withEOM: Bool = false) async {
+        // append EOM
+        var dataToSend = data
+        if withEOM {
+            dataToSend.append(EOM)
+        }
+        
+        return await withCheckedContinuation { continuation in
+            self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
+                if let error = error {
+                    logError("send error", error.localizedDescription)
+                    stop(error: error)
+                }
+                continuation.resume(returning: Void())
+            }))
+        }
+    }
+
     public func send(_ data: Data) {
-        self.sendNoQueue(data)
+//        self.sendNoQueue(data)
+        
+        guard status == .ready else {
+            return
+        }
+        
+        Task {
+            await sendAsync(data, withEOM: true)
+        }
     }
     
     public func start() {
         logDebug("starting")
 
-        connection.stateUpdateHandler = self.onStateChanged(to:)
-        receive()
-        
+        connection.stateUpdateHandler = self.onStateChanged(to:)        
         connection.start(queue: queue)
     }
     
