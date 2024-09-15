@@ -391,7 +391,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            self.connection.send(content: dataToSend, contentContext: .finalMessage, completion: .contentProcessed( { [self] error in
+            self.connection.send(content: dataToSend, contentContext: .finalMessage, isComplete: false, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
