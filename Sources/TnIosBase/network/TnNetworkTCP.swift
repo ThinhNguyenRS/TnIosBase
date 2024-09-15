@@ -346,8 +346,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
             stop(error: error)
             success = false
         } else if result.isComplete {
-            stop(error: nil)
-            success = false
+//            stop(error: nil)
+//            success = false
         }
         
         guard success else {
