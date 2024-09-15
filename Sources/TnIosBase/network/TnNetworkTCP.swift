@@ -262,9 +262,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                     if eomAssume == EOM {
                         // get received data
                         let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
-                        parts = receivedData.split(separator: EOM).map { p in
-                            p.suffix(from: 0)
-                        }
+                        parts = receivedData.split(separator: EOM)
 
                         // reset data queue
                         dataQueue.removeAll()

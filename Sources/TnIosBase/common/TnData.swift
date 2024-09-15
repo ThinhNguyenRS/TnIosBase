@@ -35,14 +35,16 @@ extension Data {
         while let r = self[pos...].range(of: separator) {
             // Append if non-empty:
             if r.lowerBound > pos {
-                chunks.append(self[pos..<r.lowerBound])
+//                chunks.append(self[pos..<r.lowerBound])
+                chunks.append(self.subdata(in: pos..<r.lowerBound))
             }
             // Update current position:
             pos = r.upperBound
         }
         // Append final chunk, if non-empty:
         if pos < endIndex {
-            chunks.append(self[pos..<endIndex])
+//            chunks.append(self[pos..<endIndex])
+            chunks.append(self.subdata(in: pos..<endIndex))
         }
         return chunks
     }
