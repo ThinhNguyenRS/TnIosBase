@@ -24,6 +24,15 @@ extension CVarArg {
     }
 }
 
+public func getNumberFormatter(_ specifier: String) -> ((CVarArg) -> String) {
+    { v in
+        v.toString(specifier)
+    }
+}
+
+public let defaultNumberFormatter: (CVarArg) -> String = getNumberFormatter("0.1f")
+
+
 //extension Float {
 //    func toString(_ format: String = "%.2f") -> String {
 //        String(format: format, self)
