@@ -168,9 +168,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private let queue: DispatchQueue
     private let EOM: Data
     private var dataQueue: Data = .init()
-    
-    private var receiving = false
-    
+        
     public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.connection = nwConnection
         let hp = nwConnection.endpoint.getHostAndPort()
@@ -202,7 +200,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     
     
     private func stop(error: Error?) {
-        receiving = false
         connection.stateUpdateHandler = nil
         connection.cancel()
         delegate?.tnNetworkStop(self, error: error)
@@ -262,6 +259,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                     if eomAssume == EOM {
                         // get received data
                         let receivedData = dataQueue[0...dataQueue.count-EOM.count-1]
+                        logDebug("received", receivedData.count)
+                        
                         parts = receivedData.split(separator: EOM)
 
                         // reset data queue
@@ -307,15 +306,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                     continuation.resume(returning: Void())
                 }
             }))
-//            self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
-//                if let error = error {
-//                    logError("send error", error.localizedDescription)
-//                    stop(error: error)
-//                    continuation.resume(throwing: error)
-//                } else {
-//                    continuation.resume(returning: Void())
-//                }
-//            }))
         }
     }
 
