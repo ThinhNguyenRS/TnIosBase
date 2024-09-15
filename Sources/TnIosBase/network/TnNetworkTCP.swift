@@ -437,11 +437,11 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         })
     }
     
-    private func sendAsync(_ data: Data, withEOM: Bool = false) async throws {
+    private func sendAsync(_ data: Data?, withEOM: Bool = false) async throws {
         // append EOM
         var dataToSend = data
-        if withEOM {
-            dataToSend.append(EOM)
+        if dataToSend != nil && withEOM {
+            dataToSend!.append(EOM)
         }
         
         return try await withCheckedThrowingContinuation { continuation in
@@ -467,6 +467,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         Task {
             do {
                 try await sendAsync(data, withEOM: true)
+                try await sendAsync(nil, withEOM: true)
                 logDebug("sent", data.count)
             } catch {
             }
