@@ -230,16 +230,11 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     
     private func receiveChunkAsync() async -> TnNetworkReceiveData {
         return await withCheckedContinuation { continuation in
-            connection.receiveMessage() { content, context, isComplete, error in
-                continuation.resume(returning: TnNetworkReceiveData(
-                    content: content, context: context, isComplete: isComplete, error: error)
+            connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { content, context, isComplete, error in
+                continuation.resume(
+                    returning: TnNetworkReceiveData(content: content, context: context, isComplete: isComplete, error: error)
                 )
             }
-//            connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { content, context, isComplete, error in
-//                continuation.resume(returning: TnNetworkReceiveData(
-//                    content: content, context: context, isComplete: isComplete, error: error)
-//                )
-//            }
         }
     }
 
@@ -264,6 +259,8 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
                 
         if let data = result.content, !data.isEmpty {
+            logDebug("receiving", data.count)
+            
             // receive data, add to queue
             dataQueue.append(data)
             
