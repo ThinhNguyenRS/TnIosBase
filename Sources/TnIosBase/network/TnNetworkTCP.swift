@@ -335,6 +335,10 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
 
     private func receiveAsync() async throws {
+        guard status == .ready else {
+            return
+        }
+
         let result = await receiveChunkAsync()
         
         var success = true
@@ -377,66 +381,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
     }
 
-    private func sendChunk(_ data: Data?, completion: @escaping () -> Void) {
-        self.connection.send(content: data, completion: .contentProcessed( { [self] error in
-            if let error = error {
-                logError("send error", error.localizedDescription)
-                self.stop(error: error)
-                return
-            }
-            completion()
-        }))
-    }
-    
-    private func startSendQueue() {
-        if let data = sendingQueue.first {
-            sendChunk(data) { [self] in
-                if !sendingQueue.isEmpty {
-                    sendingQueue.removeFirst()
-                }
-                //                sendingQueue.removeFirst()
-                if !sendingQueue.isEmpty {
-                    Thread.sleep(forTimeInterval: 0.1)
-                    startSendQueue()
-                }
-            }
-        }
-    }
-    
-    private func sendByQueue(_ data: Data) {
-        // send using queue
-        var dataToSend = data
-        dataToSend.append(EOM)
-        sendingQueue.append(dataToSend)
-        startSendQueue()
-    }
-    
-    private func sendChunkWithEOM(_ data: Data, completion: @escaping () -> Void) {
-        // append EOM
-        var dataToSend = data
-        dataToSend.append(EOM)
-        
-        
-        // send the data
-        self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
-            if let error = error {
-                logError("send error", error.localizedDescription)
-                self.stop(error: error)
-                return
-            }
-            completion()
-        }))
-    }
-    
-    private func sendNoQueue(_ data: Data) {
-        // send without queue
-        sendChunkWithEOM(data, completion: { [self] in
-            // signal send
-            logDebug("sent", data.count)
-            self.delegate?.tnNetwork(self, sentData: data)
-        })
-    }
-    
     private func sendAsync(_ data: Data?, withEOM: Bool = false) async throws {
         // append EOM
         var dataToSend = data
@@ -445,7 +389,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
+            self.connection.send(content: dataToSend, contentContext: .finalMessage, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
@@ -454,12 +398,19 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
                     continuation.resume(returning: Void())
                 }
             }))
+//            self.connection.send(content: dataToSend, completion: .contentProcessed( { [self] error in
+//                if let error = error {
+//                    logError("send error", error.localizedDescription)
+//                    stop(error: error)
+//                    continuation.resume(throwing: error)
+//                } else {
+//                    continuation.resume(returning: Void())
+//                }
+//            }))
         }
     }
 
     public func send(_ data: Data) {
-//        self.sendNoQueue(data)
-        
         guard status == .ready else {
             return
         }
@@ -467,7 +418,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         Task {
             do {
                 try await sendAsync(data, withEOM: true)
-                try await sendAsync(nil, withEOM: true)
                 logDebug("sent", data.count)
             } catch {
             }
