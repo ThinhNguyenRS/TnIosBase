@@ -128,39 +128,35 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
     let bounds: ClosedRange<TValue>
     let step: TValue.Stride
     let specifier: String
-    let formatter: ((TValue) -> String)?
+    let formatter: (TValue) -> String
     let onEdited: ((TValue) -> Void)?
-
     private let adjustBounds: Bool
-    private let minText: String
-    private let maxText: String
     
     public init(value: Binding<TValue>, bounds: ClosedRange<TValue>, step: TValue.Stride, specifier: String = "%.1f", formatter: ((TValue) -> String)? = nil, onEdited: ((TValue) -> Void)? = nil, adjustBounds: Bool = false) {
         self.value = value
         self.bounds = bounds
         self.step = step
         self.specifier = specifier
-        self.formatter = formatter
+        self.formatter = formatter ?? { (v: TValue) in v.toString(specifier)}
         self.onEdited = onEdited
         self.adjustBounds = adjustBounds
-        
-        var minVal: TValue, maxVal: TValue
-        if adjustBounds {
-            minVal = 0
-            maxVal = bounds.upperBound - bounds.lowerBound
-        } else {
-            minVal = bounds.lowerBound
-            maxVal = bounds.upperBound
-        }
-        self.minText = minVal.toString(specifier)
-        self.maxText = maxVal.toString(specifier)
     }
     
     var valueText: String {
         let v = adjustBounds ? value.wrappedValue : value.wrappedValue - bounds.lowerBound
-        return v.toString(specifier)
+        return self.formatter(v)
     }
     
+    var minText: String {
+        let v = adjustBounds ? 0 : bounds.lowerBound
+        return self.formatter(v)
+    }
+
+    var maxText: String {
+        let v = adjustBounds ? 0 : bounds.upperBound - bounds.lowerBound
+        return self.formatter(v)
+    }
+
     public var body: some View {
         Slider(
             value: value,
