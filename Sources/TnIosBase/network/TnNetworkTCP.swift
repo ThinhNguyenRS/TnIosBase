@@ -118,14 +118,14 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
 
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
-        logDebug("accepted", connection.host, connection.port)
+        logDebug("accepted", connection.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         delegate?.tnNetwork(self, accepted: connectionServer)
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
-        logDebug("disconnected", connection.host, connection.port)
+        logDebug("disconnected of", connection.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         self.connectionsByID.removeValue(forKey: connectionServer.id)
@@ -133,22 +133,18 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 
     public func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data) {
-        logDebug("received", connection.host, connection.port, receivedData.count)
+        logDebug("received from", connection.host, receivedData.count)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         delegate?.tnNetwork(self, connection: connectionServer, receivedData: receivedData)
     }
     
     public func tnNetwork(_ connection: TnNetworkConnection, sentData: Data) {
-        logDebug("sent", connection.host, connection.port, sentData.count)
+        logDebug("sent to", connection.host, sentData.count)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         delegate?.tnNetwork(self, connection: connectionServer, sentData: sentData)
     }
-}
-
-public enum TnNetworkConnectionStatus: Codable {
-    case none, ready, stopped
 }
 
 public struct TnNetworkReceiveData {
@@ -173,7 +169,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private let EOM: Data
     private var dataQueue: Data = .init()
     private var sendingQueue: [Data] = []
-    private var status: TnNetworkConnectionStatus = .none
     
     public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
         self.connection = nwConnection
@@ -185,7 +180,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         self.EOM = EOM
         self.MTU = MTU
         
-        logDebug("inited", host, port)
+        logDebug("inited incoming", host, "MTU", MTU, "maximumDatagramSize", connection.maximumDatagramSize)
     }
     
     public init(host: String, port: UInt16, queue: DispatchQueue?, delegate: TnNetworkDelegate?, EOM: Data, MTU: Int) {
@@ -197,7 +192,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         self.EOM = EOM
         self.MTU = MTU
         
-        logDebug("inited", host, port)
+        logDebug("inited client", host, "MTU", MTU, "maximumDatagramSize", connection.maximumDatagramSize)
     }
     
     deinit {
@@ -208,8 +203,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     private func stop(error: Error?) {
         connection.stateUpdateHandler = nil
         connection.cancel()
-        status = .stopped
-        
         delegate?.tnNetworkStop(self, error: error)
     }
     
@@ -219,8 +212,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         switch state {
         case .ready:
             logDebug("ready")
-            
-            status = .ready
             startReceiveAsync()
             
             delegate?.tnNetworkReady(self)
@@ -236,89 +227,6 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         default:
             break
         }
-    }
-    
-    private func findEom() -> Int {
-        guard dataQueue.count >= EOM.count else {
-            return -1
-        }
-        
-        let eomAssume = dataQueue.suffix(EOM.count)
-        if eomAssume == EOM {
-            return dataQueue.count - EOM.count
-        } else {
-            return -1
-        }
-        
-        //        let eomCount = EOM.count
-        //        var found = false
-        //        var startIndex = dataQueue.count - eomCount
-        //        while !found && startIndex >= 0 {
-        //            let eomAssume = dataQueue[startIndex...(startIndex+eomCount-1)]
-        //            if eomAssume == EOM {
-        //                found = true
-        //            } else {
-        //                startIndex -= 1
-        //            }
-        //        }
-        //        return found ? startIndex : -1
-    }
-    
-    private func processReceived(_ data: Data?) {
-        if let data = data, !data.isEmpty {
-            // receive data, add to queue
-            if data.count == EOM.count {
-                logDebug("receive EOM")
-            }
-            dataQueue.append(data)
-            
-            let eomIndex = findEom()
-            if eomIndex > -1 {
-                let receivedData = dataQueue[0...eomIndex-1]
-                
-                //                // TODO: cheat code: split received data again to make sure there's no EOM in the middle
-                //                let parts = receivedData.split(separator: EOM)
-                //                for part in parts {
-                //                    delegate?.tnNetwork(self, receivedData: part)
-                //                }
-                
-                delegate?.tnNetwork(self, receivedData: receivedData)
-                
-                // reset data queue
-                dataQueue.removeSubrange(0...eomIndex+EOM.count-1)
-            }
-        }
-    }
-    
-    private func receive() {
-        connection.receiveMessage { [self] content, contentContext, isComplete, error in
-            processReceived(content)
-            
-            if isComplete {
-                // receive completed, that may be meant the connection is disconnected
-                logError("the receiving is completed")
-                stop(error: nil)
-            } else if let error = error {
-                stop(error: error)
-            } else {
-                // continue receive
-                receive()
-            }
-        }
-        
-//        connection.receive(minimumIncompleteLength: 1, maximumLength: MTU) { [self] (data, _, isComplete, error) in
-//            processReceived(data)
-//            
-//            if isComplete {
-//                // receive completed, that may be meant the connection is disconnected
-//                stop(error: nil)
-//            } else if let error = error {
-//                stop(error: error)
-//            } else {
-//                // continue receive
-//                receive()
-//            }
-//        }
     }
     
     private func receiveChunkAsync() async -> TnNetworkReceiveData {
@@ -337,7 +245,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
 
     private func receiveAsync() async throws {
-        guard status == .ready else {
+        guard connection.state == .ready else {
             return
         }
 
@@ -391,7 +299,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
         
         return try await withCheckedThrowingContinuation { continuation in
-            self.connection.send(content: dataToSend, contentContext: .finalMessage, isComplete: false, completion: .contentProcessed( { [self] error in
+            self.connection.send(content: dataToSend, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
@@ -413,7 +321,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
 
     public func send(_ data: Data) {
-        guard status == .ready else {
+        guard connection.state == .ready else {
             return
         }
         
