@@ -15,7 +15,7 @@ let package = Package(
             targets: ["TnIosBase"]),
     ],
     dependencies: [
-        .package(name: "BinaryCodable", url: "https://github.com/christophhagen/BinaryCodable", .upToNextMajor(from: "3.0.3"))
+//        .package(name: "BinaryCodable", url: "https://github.com/christophhagen/BinaryCodable", .upToNextMajor(from: "3.0.3"))
     ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
@@ -23,7 +23,7 @@ let package = Package(
         .target(
             name: "TnIosBase",
             dependencies: [
-                "BinaryCodable"
+//                "BinaryCodable"
             ]
         ),
         .testTarget(
