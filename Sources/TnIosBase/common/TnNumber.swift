@@ -30,6 +30,12 @@ public func getNumberFormatter(_ specifier: String) -> ((CVarArg) -> String) {
     }
 }
 
+public func getNumberPercentFormatter<TValue: BinaryFloatingPoint & CVarArg>(_ specifier: String = "0.0%%f") -> ((TValue) -> String) {
+    { v in
+        (v*100).toString(specifier)
+    }
+}
+
 public let defaultNumberFormatter: (CVarArg) -> String = getNumberFormatter("0.1f")
 
 
