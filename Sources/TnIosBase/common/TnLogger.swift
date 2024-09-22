@@ -18,11 +18,8 @@ public class TnLogger {
     private init() {}
     public static var logLevel: OSLogType = .debug
         
-    public static func _log(_ level: OSLogType, _ name: String, showDate: Bool, _ items: Any?...) {
+    public static func _log(_ level: OSLogType, _ name: String, _ items: Any?...) {
         var msg: String = ""
-        if showDate {
-            msg += "[\(Date.now().toStringMS())]"
-        }
         msg += "[\(name)]"
 
         for it in items {
@@ -33,11 +30,11 @@ public class TnLogger {
         os_log(level, log: .default, "\(msg)")
     }
 
-    public static func debug(_ name: String, showDate: Bool = true, _ items: Any?...) {
-        _log(.debug, name, showDate: showDate, items)
+    public static func debug(_ name: String, _ items: Any?...) {
+        _log(.debug, name, items)
     }
-    public static func error(_ name: String, showDate: Bool = true, _ items: Any?...) {
-        _log(.error, name, showDate: showDate, items)
+    public static func error(_ name: String, _ items: Any?...) {
+        _log(.error, name, items)
     }
 }
 
@@ -46,11 +43,11 @@ public protocol TnLoggable {
 }
 
 extension TnLoggable {
-    public func logDebug(showDate: Bool = true, _ items: Any?...) {
-        TnLogger.debug(LOG_NAME, showDate: showDate, items)
+    public func logDebug(_ items: Any?...) {
+        TnLogger.debug(LOG_NAME, items)
     }
     
-    public func logError(showDate: Bool = true, _ items: Any?...) {
-        TnLogger.error(LOG_NAME, showDate: showDate, items)
+    public func logError(_ items: Any?...) {
+        TnLogger.error(LOG_NAME, items)
     }
 }
