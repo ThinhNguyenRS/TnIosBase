@@ -107,7 +107,6 @@ public class TnBluetoothServer: NSObject {
         }
     }
     
-    public static let LOG_NAME: String = "TnBluetoothServer"
     private let info: TnNetworkServiceInfo
     private var status: Status = .none
     

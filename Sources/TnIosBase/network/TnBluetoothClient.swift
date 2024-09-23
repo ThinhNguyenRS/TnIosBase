@@ -37,7 +37,6 @@ public class TnBluetoothClient: NSObject, ObservableObject {
             case finished
         }
 
-        static let LOG_NAME = "TnBluetoothClient.SendingWorker"
         let id: Int
         let outer: TnBluetoothClient
         let peripheral: CBPeripheral
@@ -98,7 +97,6 @@ public class TnBluetoothClient: NSObject, ObservableObject {
         }
     }
 
-    public static let LOG_NAME = "TnBluetoothClient"
     private let info: TnNetworkServiceInfo
     private var centralManager: CBCentralManager!
     public private(set) var discoveredPeripherals: [CBPeripheral] = []

@@ -39,15 +39,14 @@ public class TnLogger {
 }
 
 public protocol TnLoggable {
-    static var LOG_NAME: String { get }
 }
 
 extension TnLoggable {
     public func logDebug(_ items: Any?...) {
-        TnLogger.debug(Self.LOG_NAME, items)
+        TnLogger.debug("\(Self.Type.self)", items)
     }
     
     public func logError(_ items: Any?...) {
-        TnLogger.error(Self.LOG_NAME, items)
+        TnLogger.error("\(Self.Type.self)", items)
     }
 }
