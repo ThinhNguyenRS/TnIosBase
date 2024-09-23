@@ -170,16 +170,24 @@ public func tnPickerFieldStringMenu(label: String, value: Binding<String>, label
         onChanged: onChanged)
 }
 
-public struct TnPickerFieldPopup<T: Hashable & Comparable>: View {
+public struct TnPickerFieldPopup<TValue: Hashable & Comparable>: View {
     let label: String
-    let value: Binding<T>
-    let values: [T]
+    let value: Binding<TValue>
+    let values: [TValue]
     let labels: [String]
-    var onChanged: ((T) -> Void)? = nil
+    var onChanged: ((TValue) -> Void)? = nil
     
     @State private var valueIndex = 0
     @State private var showPopup = false
 
+    init(label: String, value: Binding<TValue>, values: [TValue], labels: [String], onChanged: ((TValue) -> Void)? = nil) {
+        self.label = label
+        self.value = value
+        self.values = values
+        self.labels = labels
+        self.onChanged = onChanged
+    }
+    
     public var body: some View {
         HStack {
             tnText(label)
@@ -202,7 +210,7 @@ public struct TnPickerFieldPopup<T: Hashable & Comparable>: View {
                 Spacer()
 
                 if #available(iOS 17.0, *) {
-                    Picker("Select value".lz(), selection: $valueIndex) {
+                    Picker(label, selection: $valueIndex) {
                         tnForEach(values) { idx, value in
                             tnText(labels[idx])
                                 .tag(idx)
@@ -215,7 +223,7 @@ public struct TnPickerFieldPopup<T: Hashable & Comparable>: View {
                     }
                 } else {
                     // Fallback on earlier versions
-                    Picker("Select value".lz(), selection: $valueIndex) {
+                    Picker(label, selection: $valueIndex) {
                         tnForEach(values) { idx, value in
                             tnText(labels[idx])
                                 .tag(idx)
