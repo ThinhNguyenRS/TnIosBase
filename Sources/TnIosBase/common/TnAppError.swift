@@ -18,4 +18,12 @@ extension TnAppError: LocalizedError {
             return message.lz()
         }
     }
+    
+    public static func from(_ error: Error) -> Self {
+        .general(message: error.localizedDescription)
+    }
+    
+    public static func from(_ errorString: String) -> Self {
+        .general(message: errorString)
+    }
 }
