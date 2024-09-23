@@ -32,7 +32,7 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
     }
     
     public var body: some View {
-        Picker(label.lz(), selection: value.projectedValue) {
+        Picker(label, selection: value.projectedValue) {
             tnForEach(values) { idx, value in
                 tnText(labels[idx])
                     .tag(value)
