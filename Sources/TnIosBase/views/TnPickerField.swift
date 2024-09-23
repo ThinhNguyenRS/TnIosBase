@@ -108,14 +108,14 @@ extension View {
         }
     }
     
-    public func tnPickerViewVert<T: Hashable & Comparable, TTopView: View, TBottomView: View>(
+    public func tnPickerViewVert<T: Hashable & Comparable>(
         label: String,
         value: Binding<T>,
         values: [T],
         labels: [String],
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> TTopView)? = nil,
-        bottomView: (() -> TBottomView)? = nil,
+        topView: (() -> some View)? = nil,
+        bottomView: (() -> some View)? = nil,
         padding: CGFloat = 8
     ) -> some View {
         VStack(alignment: .leading) {
@@ -130,13 +130,13 @@ extension View {
         .padding(.all, padding)
     }
     
-    public func tnPickerViewVert<T: TnEnum, TTopView: View, TBottomView: View>(
+    public func tnPickerViewVert<T: TnEnum>(
         label: String,
         value: Binding<T>,
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> TTopView)? = nil,
-        bottomView: (() -> TBottomView)? = nil,
+        topView: (() -> some View)? = nil,
+        bottomView: (() -> some View)? = nil,
         padding: CGFloat = 8
     ) -> some View {
         VStack(alignment: .leading) {
