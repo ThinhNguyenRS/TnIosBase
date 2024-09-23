@@ -26,4 +26,8 @@ extension TnAppError: LocalizedError {
     public static func from(_ errorString: String) -> Self {
         .general(message: errorString)
     }
+    
+    public static func from(_ errorString: String, _ error: Error?) -> Self {
+        .general(message: "\(errorString): \(error?.localizedDescription ?? "")")
+    }
 }
