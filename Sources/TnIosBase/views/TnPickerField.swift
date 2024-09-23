@@ -32,33 +32,19 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
     }
     
     public var body: some View {
-        Picker(
-            selection: value,
-            content: {
+        VStack(alignment: .leading){
+            Text(label.lz())
+            Picker("", selection: value.projectedValue) {
                 tnForEach(values) { idx, value in
                     tnText(labels[idx])
                         .tag(value)
                 }
-            },
-            label: {
-                Text(label)
             }
-        )
-        .pickerStyle(style())
+            .pickerStyle(style())
+        }
         .onChange(of: value.wrappedValue, perform: { _ in
             self.onChanged?(value.wrappedValue)
         })
-
-//        Picker(label, selection: value.projectedValue) {
-//            tnForEach(values) { idx, value in
-//                tnText(labels[idx])
-//                    .tag(value)
-//            }
-//        }
-//        .pickerStyle(style())
-//        .onChange(of: value.wrappedValue, perform: { _ in
-//            self.onChanged?(value.wrappedValue)
-//        })
     }
 }
 
