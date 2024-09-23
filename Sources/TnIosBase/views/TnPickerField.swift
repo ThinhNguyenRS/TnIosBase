@@ -7,47 +7,47 @@
 
 import SwiftUI
 
-public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View {
-    var label: String = ""
-    var value: Binding<T>
-    let values: [T]
-    let labels: [String]
-    let style: () -> TStyle
-    let onChanged: ((T) -> Void)?
-    
-    public init(
-        label: String,
-        value: Binding<T>,
-        values: [T],
-        labels: [String],
-        style: @escaping () -> TStyle,
-        onChanged: ((T) -> Void)? = nil
-    )
-    {
-        self.label = label
-        self.values = values
-        self.labels = labels
-        self.style = style
-        self.onChanged = onChanged
-        self.value = value
-    }
-    
-    public var body: some View {
-        VStack(alignment: .leading){
-            Text(label.lz())
-            Picker("", selection: value.projectedValue) {
-                tnForEach(values) { idx, value in
-                    tnText(labels[idx])
-                        .tag(value)
-                }
-            }
-            .pickerStyle(style())
-        }
-        .onChange(of: value.wrappedValue, perform: { _ in
-            self.onChanged?(value.wrappedValue)
-        })
-    }
-}
+//public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View {
+//    var label: String = ""
+//    var value: Binding<T>
+//    let values: [T]
+//    let labels: [String]
+//    let style: () -> TStyle
+//    let onChanged: ((T) -> Void)?
+//    
+//    public init(
+//        label: String,
+//        value: Binding<T>,
+//        values: [T],
+//        labels: [String],
+//        style: @escaping () -> TStyle,
+//        onChanged: ((T) -> Void)? = nil
+//    )
+//    {
+//        self.label = label
+//        self.values = values
+//        self.labels = labels
+//        self.style = style
+//        self.onChanged = onChanged
+//        self.value = value
+//    }
+//    
+//    public var body: some View {
+//        VStack(alignment: .leading){
+//            Text(label.lz())
+//            Picker("", selection: value.projectedValue) {
+//                tnForEach(values) { idx, value in
+//                    tnText(labels[idx])
+//                        .tag(value)
+//                }
+//            }
+//            .pickerStyle(style())
+//        }
+//        .onChange(of: value.wrappedValue, perform: { _ in
+//            self.onChanged?(value.wrappedValue)
+//        })
+//    }
+//}
 
 extension View {
     public func tnPickerView<T: Hashable & Comparable>(
