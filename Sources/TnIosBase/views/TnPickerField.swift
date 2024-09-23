@@ -108,29 +108,47 @@ extension View {
         }
     }
     
-    public func tnPickerViewVert<T: Hashable & Comparable>(
+    public func tnPickerViewVert<T: Hashable & Comparable, TTopView: View, TBottomView: View>(
         label: String,
         value: Binding<T>,
         values: [T],
         labels: [String],
-        onChanged: ((T) -> Void)? = nil
+        onChanged: ((T) -> Void)? = nil,
+        topView: (() -> TTopView)? = nil,
+        bottomView: (() -> TBottomView)? = nil,
+        padding: CGFloat = 8
     ) -> some View {
         VStack(alignment: .leading) {
             Text(label)
+            
+            topView?()
+
             tnPickerView(value: value, values: values, labels: labels)
+
+            bottomView?()
         }
+        .padding(.all, padding)
     }
     
-    public func tnPickerViewVert<T: TnEnum>(
+    public func tnPickerViewVert<T: TnEnum, TTopView: View, TBottomView: View>(
         label: String,
         value: Binding<T>,
         values: [T]? = nil,
-        onChanged: ((T) -> Void)? = nil
+        onChanged: ((T) -> Void)? = nil,
+        topView: (() -> TTopView)? = nil,
+        bottomView: (() -> TBottomView)? = nil,
+        padding: CGFloat = 8
     ) -> some View {
         VStack(alignment: .leading) {
             Text(label)
+            
+            topView?()
+
             tnPickerView(value: value, values: values)
+
+            bottomView?()
         }
+        .padding(.all, padding)
     }
 }
 
