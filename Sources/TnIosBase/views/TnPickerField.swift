@@ -14,7 +14,6 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
     let labels: [String]
     let style: () -> TStyle
     var height: CGFloat? = nil
-    var pickerLabel: String? = nil
     var horizontal: Bool = false
     
     var onChanged: ((T) -> Void)? = nil
@@ -26,7 +25,6 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
         labels: [String],
         style: @escaping () -> TStyle,
         height: CGFloat? = nil,
-        pickerLabel: String? = nil,
         horizontal: Bool = false,
         onChanged: ((T) -> Void)? = nil)
     {
@@ -35,14 +33,13 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
         self.labels = labels
         self.style = style
         self.height = height
-        self.pickerLabel = pickerLabel
         self.horizontal = horizontal
         self.onChanged = onChanged
         self.value = value
     }
     
     var pickerView: some View {
-        Picker((pickerLabel ?? label).lz(), selection: value.projectedValue) {
+        Picker(label.lz(), selection: value.projectedValue) {
             tnForEach(values) { idx, value in
                 tnText(labels[idx])
                     .tag(value)
@@ -54,20 +51,16 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
     
     public var body: some View {
         Group {
-            if label.isEmpty {
-                pickerView
+            if horizontal {
+                HStack {
+                    tnText(label)
+                    Spacer()
+                    pickerView
+                }
             } else {
-                if horizontal {
-                    HStack {
-                        tnText(label)
-                        Spacer()
-                        pickerView
-                    }
-                } else {
-                    VStack(alignment: .leading, spacing: TnFieldExtensions.spacing) {
-                        tnText(label)
-                        pickerView
-                    }
+                VStack(alignment: .leading, spacing: TnFieldExtensions.spacing) {
+                    tnText(label)
+                    pickerView
                 }
             }
         }
@@ -111,7 +104,7 @@ extension TnPickerField where T == String {
 }
 
 
-public func tnPickerFieldEnum<T: TnEnum, TStyle: PickerStyle>(label: String, value: Binding<T>, style: @escaping () -> TStyle, height: CGFloat? = nil, pickerLabel: String? = nil, onChanged: ((T) -> Void)? = nil) -> TnPickerField<T, TStyle> {
+public func tnPickerFieldEnum<T: TnEnum, TStyle: PickerStyle>(label: String, value: Binding<T>, style: @escaping () -> TStyle, height: CGFloat? = nil, onChanged: ((T) -> Void)? = nil) -> TnPickerField<T, TStyle> {
     TnPickerField(
         label: label,
         value: value,
@@ -119,11 +112,10 @@ public func tnPickerFieldEnum<T: TnEnum, TStyle: PickerStyle>(label: String, val
         labels: T.allNames,
         style: style,
         height: height,
-        pickerLabel: pickerLabel,
         onChanged: onChanged)
 }
 
-public func tnPickerFieldEnum<T: TnEnum>(label: String, value: Binding<T>, height: CGFloat? = nil, pickerLabel: String? = nil, onChanged: ((T) -> Void)? = nil) -> TnPickerField<T, SegmentedPickerStyle> {
+public func tnPickerFieldEnum<T: TnEnum>(label: String, value: Binding<T>, height: CGFloat? = nil, onChanged: ((T) -> Void)? = nil) -> TnPickerField<T, SegmentedPickerStyle> {
     TnPickerField(
         label: label,
         value: value,
@@ -131,11 +123,10 @@ public func tnPickerFieldEnum<T: TnEnum>(label: String, value: Binding<T>, heigh
         labels: T.allNames,
         style: {SegmentedPickerStyle()},
         height: height,
-        pickerLabel: pickerLabel,
         onChanged: onChanged)
 }
 
-public func tnPickerFieldString<TStyle: PickerStyle>(label: String, value: Binding<String>, labels: [String], style: @escaping () -> TStyle, height: CGFloat? = nil, pickerLabel: String? = nil, onChanged: ((String) -> Void)? = nil) -> TnPickerField<String, TStyle> {
+public func tnPickerFieldString<TStyle: PickerStyle>(label: String, value: Binding<String>, labels: [String], style: @escaping () -> TStyle, height: CGFloat? = nil, onChanged: ((String) -> Void)? = nil) -> TnPickerField<String, TStyle> {
     TnPickerField(
         label: label,
         value: value,
@@ -143,22 +134,21 @@ public func tnPickerFieldString<TStyle: PickerStyle>(label: String, value: Bindi
         labels: labels,
         style: style,
         height: height,
-        pickerLabel: pickerLabel,
         onChanged: onChanged)
 }
 
-public func tnPickerFieldString(label: String, value: Binding<String>, labels: [String], height: CGFloat? = nil, pickerLabel: String? = nil, onChanged: ((String) -> Void)? = nil) -> TnPickerField<String, SegmentedPickerStyle> {
+public func tnPickerFieldString(label: String, value: Binding<String>, labels: [String], height: CGFloat? = nil, onChanged: ((String) -> Void)? = nil) -> TnPickerField<String, SegmentedPickerStyle> {
     TnPickerField(
         label: label,
         value: value,
         values: labels,
         labels: labels,
         style: {SegmentedPickerStyle()},
-        height: height,
-        pickerLabel: pickerLabel)
+        height: height
+    )
 }
 
-public func tnPickerFieldStringMenu(label: String, value: Binding<String>, labels: [String], height: CGFloat? = nil, pickerLabel: String? = nil, onChanged: ((String) -> Void)? = nil) -> TnPickerField<String, MenuPickerStyle> {
+public func tnPickerFieldStringMenu(label: String, value: Binding<String>, labels: [String], height: CGFloat? = nil, onChanged: ((String) -> Void)? = nil) -> TnPickerField<String, MenuPickerStyle> {
     TnPickerField(
         label: label,
         value: value,
@@ -166,7 +156,6 @@ public func tnPickerFieldStringMenu(label: String, value: Binding<String>, label
         labels: labels,
         style: {MenuPickerStyle()},
         height: height,
-        pickerLabel: pickerLabel,
         onChanged: onChanged)
 }
 
