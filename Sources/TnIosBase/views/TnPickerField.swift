@@ -41,7 +41,7 @@ public struct TnPickerField<T: Hashable & Comparable, TStyle: PickerStyle>: View
                 }
             },
             label: {
-                Text(label.lz())
+                Text(label)
             }
         )
         .pickerStyle(style())
