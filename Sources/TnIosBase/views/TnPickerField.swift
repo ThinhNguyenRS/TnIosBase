@@ -180,7 +180,7 @@ public struct TnPickerFieldPopup<TValue: Hashable & Comparable>: View {
     @State private var valueIndex = 0
     @State private var showPopup = false
 
-    init(label: String, value: Binding<TValue>, values: [TValue], labels: [String], onChanged: ((TValue) -> Void)? = nil) {
+    public init(label: String, value: Binding<TValue>, values: [TValue], labels: [String], onChanged: ((TValue) -> Void)? = nil) {
         self.label = label
         self.value = value
         self.values = values
