@@ -107,7 +107,7 @@ public class TnBluetoothServer: NSObject {
         }
     }
     
-    public let LOG_NAME: String = "TnBluetoothServer"
+    public static let LOG_NAME: String = "TnBluetoothServer"
     private let info: TnNetworkServiceInfo
     private var status: Status = .none
     
@@ -156,23 +156,23 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
     public func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         switch peripheral.state {
         case .poweredOn:
-            TnLogger.debug(LOG_NAME, "poweredOn")
+            logDebug("poweredOn")
             setup()
             return
         case .resetting:
-            TnLogger.debug(LOG_NAME, "resetting")
+            logDebug("resetting")
             return
         case .unsupported:
-            TnLogger.debug(LOG_NAME, "unsupported")
+            logDebug("unsupported")
             return
         case .unauthorized:
-            TnLogger.debug(LOG_NAME, "unauthorized")
+            logDebug("unauthorized")
             return
         case .poweredOff:
-            TnLogger.debug(LOG_NAME, "poweredOff")
+            logDebug("poweredOff")
             return
         case .unknown:
-            TnLogger.debug(LOG_NAME, "unknown")
+            logDebug("unknown")
             return
         @unknown default:
             return
@@ -181,12 +181,12 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
     
     public func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {
         connectedCentrals.append(central)
-        TnLogger.debug(LOG_NAME, "subscribed", central.identifier.uuidString)
+        logDebug("subscribed", central.identifier.uuidString)
     }
     
     public func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didUnsubscribeFrom characteristic: CBCharacteristic) {
         connectedCentrals.removeAll(byID: central)
-        TnLogger.debug(LOG_NAME, "unsubscribed", central.identifier.uuidString)
+        logDebug("unsubscribed", central.identifier.uuidString)
     }
     
     public func peripheralManagerIsReady(toUpdateSubscribers peripheral: CBPeripheralManager) {
@@ -202,7 +202,7 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
             
             var data = dataQueue[request.central.identifier.uuidString] ?? .init()
             if data.isEmpty {
-                TnLogger.debug(LOG_NAME, "receiving", request.central.identifier.uuidString)
+                logDebug("receiving", request.central.identifier.uuidString)
             }
             let receiveMessage = requestValue.count == info.EOM.count && requestValue == info.EOM
             if !receiveMessage {
@@ -212,7 +212,7 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
             }
 
             if receiveMessage {
-                TnLogger.debug(LOG_NAME, "received", request.central.identifier.uuidString, data.count)
+                logDebug("received", request.central.identifier.uuidString, data.count)
                 delegate?.tnBluetoothServer(ble: self, receivedID: request.central.identifier.uuidString, receivedData: data)
                 data.removeAll()
             }
@@ -221,7 +221,7 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
     }
 
     public func peripheralManager(_ peripheral: CBPeripheralManager, didReceiveRead request: CBATTRequest) {
-        TnLogger.debug(LOG_NAME, "didReceiveRead")
+        logDebug("didReceiveRead")
     }
 }
 
@@ -247,7 +247,7 @@ extension TnBluetoothServer {
         peripheralManager.add(transferService)
                 
         self.status = .inited
-        TnLogger.debug(LOG_NAME, "inited")
+        logDebug("inited")
         delegate?.tnBluetoothServer(ble: self, statusChanged: status)
     }
     
@@ -261,7 +261,7 @@ extension TnBluetoothServer {
         peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [info.bleServiceUUID]])
         
         status = .started
-        TnLogger.debug(LOG_NAME, "started")
+        logDebug("started")
         delegate?.tnBluetoothServer(ble: self, statusChanged: status)
     }
     
@@ -275,7 +275,7 @@ extension TnBluetoothServer {
         peripheralManager.stopAdvertising()
         
         status = .stopped
-        TnLogger.debug(LOG_NAME, "stopped")
+        logDebug("stopped")
         delegate?.tnBluetoothServer(ble: self, statusChanged: status)
     }
     

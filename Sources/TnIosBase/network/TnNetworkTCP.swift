@@ -32,7 +32,7 @@ public protocol TnNetwork {
 }
 
 public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
-    public let LOG_NAME = "TnNetworkServer"
+    public static let LOG_NAME = "TnNetworkServer"
     
     public let host: String
     public let port: UInt16
@@ -155,7 +155,7 @@ public struct TnNetworkReceiveData {
 }
 
 public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
-    public let LOG_NAME = "TnNetworkConnection"
+    public static let LOG_NAME = "TnNetworkConnection"
     
     //The TCP maximum package size is 64K 65536
     let MTU: Int
@@ -174,7 +174,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         let hp = nwConnection.endpoint.getHostAndPort()
         self.host = hp.host
         self.port = hp.port
-        self.queue = queue ?? DispatchQueue(label: "\(LOG_NAME).queue")
+        self.queue = queue ?? DispatchQueue(label: "\(Self.LOG_NAME).queue")
         self.delegate = delegate
         self.EOM = EOM
         self.MTU = MTU
@@ -186,7 +186,7 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         self.host = host
         self.port = port
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
-        self.queue = queue ?? DispatchQueue(label: "\(LOG_NAME).queue")
+        self.queue = queue ?? DispatchQueue(label: "\(Self.LOG_NAME).queue")
         self.delegate = delegate
         self.EOM = EOM
         self.MTU = MTU

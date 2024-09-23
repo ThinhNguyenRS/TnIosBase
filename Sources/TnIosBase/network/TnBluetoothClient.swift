@@ -22,7 +22,7 @@ public protocol TnBluetoothClientDelegate {
 
 // MARK: members
 public class TnBluetoothClient: NSObject, ObservableObject {
-    class SendingWorker: Hashable {
+    class SendingWorker: Hashable, TnLoggable {
         static func == (lhs: TnBluetoothClient.SendingWorker, rhs: TnBluetoothClient.SendingWorker) -> Bool {
             lhs.id == rhs.id
         }
@@ -37,7 +37,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
             case finished
         }
 
-        let LOG_NAME = "TnBluetoothClient.SendingWorker"
+        static let LOG_NAME = "TnBluetoothClient.SendingWorker"
         let id: Int
         let outer: TnBluetoothClient
         let peripheral: CBPeripheral
@@ -54,7 +54,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
             self.data = data
             self.mtu = peripheral.maximumWriteValueLength(for: .withoutResponse)
 
-            TnLogger.debug(LOG_NAME, "sending", peripheral.name!, data.count)
+            logDebug("sending", peripheral.name!, data.count)
             self.send()
         }
         
@@ -62,7 +62,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
             peripheral.writeValue(outer.info.EOM, for: outer.transferCharacteristic!, type: .withoutResponse)
             status = .finished
 
-            TnLogger.debug(LOG_NAME, "sent", peripheral.name!, data.count)
+            logDebug("sent", peripheral.name!, data.count)
             outer.delegate?.tnBluetoothClient(ble: outer, sentID: peripheral.identifier.uuidString, sentData: data)
 
             outer.sendingWorkers.remove(of: self)
@@ -98,7 +98,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
         }
     }
 
-    public let LOG_NAME = "TnBluetoothClient"
+    public static let LOG_NAME = "TnBluetoothClient"
     private let info: TnNetworkServiceInfo
     private var centralManager: CBCentralManager!
     public private(set) var discoveredPeripherals: [CBPeripheral] = []
@@ -158,12 +158,12 @@ extension TnBluetoothClient: CBCentralManagerDelegate {
         // Reject if the signal strength is too low to attempt data transfer.
         // Change the minimum RSSI value depending on your app’s use case.
         guard RSSI.intValue >= info.bleRssiMin else {
-            TnLogger.debug(LOG_NAME, "Discovered perhiperal not in expected range, at", RSSI.intValue)
+            logDebug("Discovered perhiperal not in expected range, at", RSSI.intValue)
             return
         }
         
         if !discoveredPeripherals.contains(byID: peripheral) {
-            TnLogger.debug(LOG_NAME, "discovered", peripheral.name!)
+            logDebug("discovered", peripheral.name!)
             discoveredPeripherals.append(peripheral)
             delegate?.tnBluetoothClient(ble: self, discoveredID: peripheral.identifier.uuidString)
         }
@@ -173,11 +173,11 @@ extension TnBluetoothClient: CBCentralManagerDelegate {
         guard let centralManager = self.centralManager else {
             return
         }
-        TnLogger.debug(LOG_NAME, "Peripheral Connected")
+        logDebug("Peripheral Connected")
         
         // Stop scanning
         centralManager.stopScan()
-        TnLogger.debug(LOG_NAME, "Scanning stopped")
+        logDebug("Scanning stopped")
                 
         // Make sure we get the discovery callbacks
         peripheral.delegate = self
@@ -189,7 +189,7 @@ extension TnBluetoothClient: CBCentralManagerDelegate {
     }
     
     public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: (any Error)?) {
-        TnLogger.debug(LOG_NAME, "disconnected", peripheral.identifier.uuidString)
+        logDebug("disconnected", peripheral.identifier.uuidString)
         connectedPeripherals.removeAll(byID: peripheral)
         delegate?.tnBluetoothClient(ble: self, disconnectedID: peripheral.identifier.uuidString)
     }
@@ -206,7 +206,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
      */
     public func peripheral(_ peripheral: CBPeripheral, didModifyServices invalidatedServices: [CBService]) {
         for service in invalidatedServices where service.uuid == info.bleServiceUUID {
-            TnLogger.debug(LOG_NAME, "Transfer service is invalidated - rediscover services")
+            logDebug("Transfer service is invalidated - rediscover services")
             peripheral.discoverServices([info.bleServiceUUID])
         }
     }
@@ -216,7 +216,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
      */
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
         if let error = error {
-            TnLogger.debug(LOG_NAME, "Error discovering services:", error.localizedDescription)
+            logDebug("Error discovering services:", error.localizedDescription)
             cleanup()
             return
         }
@@ -225,7 +225,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         
         // Loop through the newly filled peripheral.services array, just in case there's more than one.
         guard let peripheralServices = peripheral.services else { return }
-        TnLogger.debug(LOG_NAME, "Discovered services:", peripheralServices.count)
+        logDebug("Discovered services:", peripheralServices.count)
 
         for service in peripheralServices {
             peripheral.discoverCharacteristics([info.bleCharacteristicUUID], for: service)
@@ -239,7 +239,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
     public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
         // Deal with errors (if any).
         if let error = error {
-            TnLogger.debug(LOG_NAME, "Error discovering characteristics:", error.localizedDescription)
+            logDebug("Error discovering characteristics:", error.localizedDescription)
             cleanup()
             return
         }
@@ -249,14 +249,14 @@ extension TnBluetoothClient: CBPeripheralDelegate {
             return
         }
 
-        TnLogger.debug(LOG_NAME, "Discovered characteristics:", serviceCharacteristics.count)
+        logDebug("Discovered characteristics:", serviceCharacteristics.count)
         for characteristic in serviceCharacteristics where characteristic.uuid == info.bleCharacteristicUUID {
             // If it is, subscribe to it
             transferCharacteristic = characteristic
             peripheral.setNotifyValue(true, for: characteristic)
 
             // this is real connected
-            TnLogger.debug(LOG_NAME, "connected", peripheral.identifier.uuidString)
+            logDebug("connected", peripheral.identifier.uuidString)
             delegate?.tnBluetoothClient(ble: self, connectedID: peripheral.identifier.uuidString)
         }
         
@@ -270,7 +270,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
     public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         // Deal with errors (if any)
         if let error = error {
-            TnLogger.debug(LOG_NAME, "Error discovering characteristics:", error.localizedDescription)
+            logDebug("Error discovering characteristics:", error.localizedDescription)
             cleanup()
             return
         }
@@ -281,7 +281,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         
         var data = dataQueue[peripheral.identifier.uuidString] ?? .init()
         if data.isEmpty {
-            TnLogger.debug(LOG_NAME, "receiving", peripheral.identifier.uuidString)
+            logDebug("receiving", peripheral.identifier.uuidString)
         }
         let receiveMessage = characteristicData.count == info.EOM.count && characteristicData == info.EOM
         if !receiveMessage {
@@ -291,7 +291,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         
         if receiveMessage {
             // signal
-            TnLogger.debug(LOG_NAME, "received", peripheral.identifier.uuidString, data.count)
+            logDebug("received", peripheral.identifier.uuidString, data.count)
             delegate?.tnBluetoothClient(ble: self, receivedID: peripheral.identifier.uuidString, receivedData: data)
             data.removeAll()
         }
@@ -305,7 +305,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
     public func peripheral(_ peripheral: CBPeripheral, didUpdateNotificationStateFor characteristic: CBCharacteristic, error: Error?) {
         // Deal with errors (if any)
         if let error = error {
-            TnLogger.debug(LOG_NAME, "Error changing notification state:", error.localizedDescription)
+            logDebug("Error changing notification state:", error.localizedDescription)
             return
         }
         
@@ -316,10 +316,10 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         
         if characteristic.isNotifying {
             // Notification has started
-            TnLogger.debug(LOG_NAME, "Notification began on: ", characteristic.service!.uuid.uuidString)
+            logDebug("Notification began on: ", characteristic.service!.uuid.uuidString)
         } else {
             // Notification has stopped, so disconnect from the peripheral
-            TnLogger.debug(LOG_NAME, "Notification stopped on: ", characteristic.service!.uuid.uuidString)
+            logDebug("Notification stopped on: ", characteristic.service!.uuid.uuidString)
 //            cleanup()
         }
     }
@@ -406,7 +406,7 @@ extension TnBluetoothClient {
     public func connect(peripheralID: String) {
         if let peripheral = discoveredPeripherals.first(byID: peripheralID) {
             // connect to the peripheral.
-            TnLogger.debug(LOG_NAME, "Connecting to perhiperal", peripheral.name!)
+            logDebug("Connecting to perhiperal", peripheral.name!)
             centralManager!.connect(peripheral, options: nil)
         }
     }
@@ -419,7 +419,7 @@ extension TnBluetoothClient {
     
     public func disconnect(peripheral: CBPeripheral) {
         if peripheral.state == .connected {
-            TnLogger.debug(LOG_NAME, "Disconnecting from perhiperal", peripheral.name!)
+            logDebug("Disconnecting from perhiperal", peripheral.name!)
 
             for service in (peripheral.services ?? [] as [CBService]) {
                 for characteristic in (service.characteristics ?? [] as [CBCharacteristic]) {
@@ -437,7 +437,7 @@ extension TnBluetoothClient {
 
 extension TnBluetoothClient {
     public func send(msg: TnMessage, peripheralIDs: [String]? = nil) {
-        TnLogger.debug(LOG_NAME, "send", msg.typeCode)
+        logDebug("send", msg.typeCode)
         self.send(data: msg.data, peripheralIDs: peripheralIDs)
     }
     
