@@ -99,7 +99,7 @@ extension View {
         onChanged: ((T) -> Void)? = nil,
         topView: (() -> TTopView?),
         bottomView: (() -> TBottomView?),
-        padding: CGFloat = 8,
+        padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {
         VStack(alignment: .leading) {
@@ -121,7 +121,7 @@ extension View {
         onChanged: ((T) -> Void)? = nil,
         topView: (() -> TTopView?),
         bottomView: (() -> TBottomView?),
-        padding: CGFloat = 8,
+        padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {
         VStack(alignment: .leading) {
@@ -142,7 +142,7 @@ extension View {
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
         topView: (() -> TTopView?) = { nil as EmptyView? },
-        padding: CGFloat = 8,
+        padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {
         tnPickerViewVert(
@@ -161,7 +161,7 @@ extension View {
         value: Binding<T>,
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
-        padding: CGFloat = 8,
+        padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {
         tnPickerViewVert(
