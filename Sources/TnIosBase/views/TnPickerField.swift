@@ -108,26 +108,64 @@ extension View {
         }
     }
     
-    public func tnPickerViewVert<T: Hashable & Comparable>(
+    public func tnPickerViewVert<T: Hashable & Comparable, TTopView: View, TBottomView: View>(
         label: String,
         value: Binding<T>,
         values: [T],
         labels: [String],
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> some View)? = nil,
-        bottomView: (() -> some View)? = nil,
+        topView: (() -> TTopView?),
+        bottomView: (() -> TBottomView?),
         padding: CGFloat = 8
     ) -> some View {
         VStack(alignment: .leading) {
             Text(label)
             
-            topView?()
-
+            topView()
+            
             tnPickerView(value: value, values: values, labels: labels)
-
-            bottomView?()
+            
+            bottomView()
         }
         .padding(.all, padding)
+    }
+    
+    public func tnPickerViewVert<T: TnEnum, TTopView: View, TBottomView: View>(
+        label: String,
+        value: Binding<T>,
+        values: [T]? = nil,
+        onChanged: ((T) -> Void)? = nil,
+        topView: (() -> TTopView?),
+        bottomView: (() -> TBottomView?),
+        padding: CGFloat = 8
+    ) -> some View {
+        VStack(alignment: .leading) {
+            Text(label)
+            
+            topView()
+            
+            tnPickerView(value: value, values: values)
+            
+            bottomView()
+        }
+        .padding(.all, padding)
+    }
+    
+    public func tnPickerViewVert<T: TnEnum, TTopView: View>(
+        label: String,
+        value: Binding<T>,
+        values: [T]? = nil,
+        onChanged: ((T) -> Void)? = nil,
+        topView: (() -> TTopView?) = { nil as EmptyView? },
+        padding: CGFloat = 8
+    ) -> some View {
+        tnPickerViewVert(
+            label: label,
+            value: value,
+            topView: topView,
+            bottomView: { nil as EmptyView? },
+            padding: padding
+        )
     }
     
     public func tnPickerViewVert<T: TnEnum>(
@@ -135,20 +173,15 @@ extension View {
         value: Binding<T>,
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> some View)? = nil,
-        bottomView: (() -> some View)? = nil,
         padding: CGFloat = 8
     ) -> some View {
-        VStack(alignment: .leading) {
-            Text(label)
-            
-            topView?()
-
-            tnPickerView(value: value, values: values)
-
-            bottomView?()
-        }
-        .padding(.all, padding)
+        tnPickerViewVert(
+            label: label,
+            value: value,
+            topView: { nil as EmptyView? },
+            bottomView: { nil as EmptyView? },
+            padding: padding
+        )
     }
 }
 
