@@ -67,7 +67,7 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
 }
 
 extension View {
-    func tnSliderView<TValue>(
+    public func tnSliderView<TValue>(
         value: Binding<TValue>,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
@@ -85,7 +85,7 @@ extension View {
         )
     }
     
-    func tnSliderViewVert<TValue, TTopView: View, TBottomView: View>(
+    public func tnSliderViewVert<TValue, TTopView: View, TBottomView: View>(
         label: String,
         value: Binding<TValue>,
         bounds: ClosedRange<TValue>,
@@ -114,7 +114,7 @@ extension View {
         }
     }
     
-    func tnSliderViewVert<TValue, TTopView: View>(
+    public func tnSliderViewVert<TValue, TTopView: View>(
         label: String,
         value: Binding<TValue>,
         bounds: ClosedRange<TValue>,
@@ -135,7 +135,7 @@ extension View {
         )
     }
     
-    func tnSliderViewVert<TValue, TBottomView: View>(
+    public func tnSliderViewVert<TValue, TBottomView: View>(
         label: String,
         value: Binding<TValue>,
         bounds: ClosedRange<TValue>,
@@ -156,7 +156,7 @@ extension View {
         )
     }
     
-    func tnSliderViewVert<TValue>(
+    public func tnSliderViewVert<TValue>(
         label: String,
         value: Binding<TValue>,
         bounds: ClosedRange<TValue>,
