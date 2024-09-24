@@ -86,8 +86,8 @@ extension View {
     }
     
     public func tnSliderViewVert<TValue, TTopView: View, TBottomView: View>(
-        label: String,
         value: Binding<TValue>,
+        label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
         formatter: @escaping (TValue) -> String,
@@ -115,8 +115,8 @@ extension View {
     }
     
     public func tnSliderViewVert<TValue, TTopView: View>(
-        label: String,
         value: Binding<TValue>,
+        label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
         formatter: @escaping (TValue) -> String,
@@ -125,8 +125,8 @@ extension View {
         topView: () -> TTopView?
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
         tnSliderViewVert(
-            label: label,
             value: value,
+            label: label,
             bounds: bounds,
             step: step,
             formatter: formatter,
@@ -136,8 +136,8 @@ extension View {
     }
     
     public func tnSliderViewVert<TValue, TBottomView: View>(
-        label: String,
         value: Binding<TValue>,
+        label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
         formatter: @escaping (TValue) -> String,
@@ -146,8 +146,8 @@ extension View {
         bottomView: () -> TBottomView?
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
         tnSliderViewVert(
-            label: label,
             value: value,
+            label: label,
             bounds: bounds,
             step: step,
             formatter: formatter,
@@ -157,8 +157,8 @@ extension View {
     }
     
     public func tnSliderViewVert<TValue>(
-        label: String,
         value: Binding<TValue>,
+        label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
         formatter: @escaping (TValue) -> String,
@@ -166,8 +166,8 @@ extension View {
         adjustBounds: Bool = false
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
         tnSliderViewVert(
-            label: label,
             value: value,
+            label: label,
             bounds: bounds,
             step: step,
             formatter: formatter,
