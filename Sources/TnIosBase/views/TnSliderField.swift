@@ -71,8 +71,8 @@ extension View {
         value: Binding<TValue>,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
-        formatter: @escaping (TValue) -> String,
         onChanged: ((TValue) -> Void)? = nil,
+        formatter: @escaping (TValue) -> String,
         adjustBounds: Bool = false
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
         TnSliderField(
@@ -90,8 +90,8 @@ extension View {
         label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
-        formatter: @escaping (TValue) -> String,
         onChanged: ((TValue) -> Void)? = nil,
+        formatter: @escaping (TValue) -> String,
         adjustBounds: Bool = false,
         topView: () -> TTopView?,
         bottomView: () -> TBottomView?
@@ -119,8 +119,8 @@ extension View {
         label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
-        formatter: @escaping (TValue) -> String,
         onChanged: ((TValue) -> Void)? = nil,
+        formatter: @escaping (TValue) -> String,
         adjustBounds: Bool = false,
         topView: () -> TTopView?
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
@@ -129,7 +129,9 @@ extension View {
             label: label,
             bounds: bounds,
             step: step,
+            onChanged: onChanged,
             formatter: formatter,
+            adjustBounds: adjustBounds,
             topView: topView,
             bottomView: { nil as EmptyView? }
         )
@@ -140,8 +142,8 @@ extension View {
         label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
-        formatter: @escaping (TValue) -> String,
         onChanged: ((TValue) -> Void)? = nil,
+        formatter: @escaping (TValue) -> String,
         adjustBounds: Bool = false,
         bottomView: () -> TBottomView?
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
@@ -150,7 +152,9 @@ extension View {
             label: label,
             bounds: bounds,
             step: step,
+            onChanged: onChanged,
             formatter: formatter,
+            adjustBounds: adjustBounds,
             topView: { nil as EmptyView? },
             bottomView: bottomView
         )
@@ -161,8 +165,8 @@ extension View {
         label: String,
         bounds: ClosedRange<TValue>,
         step: TValue.Stride,
-        formatter: @escaping (TValue) -> String,
         onChanged: ((TValue) -> Void)? = nil,
+        formatter: @escaping (TValue) -> String,
         adjustBounds: Bool = false
     ) -> some View where TValue : BinaryFloatingPoint & CVarArg, TValue.Stride : BinaryFloatingPoint {
         tnSliderViewVert(
@@ -170,7 +174,9 @@ extension View {
             label: label,
             bounds: bounds,
             step: step,
+            onChanged: onChanged,
             formatter: formatter,
+            adjustBounds: adjustBounds,
             topView: { nil as EmptyView? },
             bottomView: { nil as EmptyView? }
         )
