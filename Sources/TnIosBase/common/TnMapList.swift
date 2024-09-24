@@ -1,6 +1,6 @@
 //
 //  TnMapList.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 9/12/21.
 //

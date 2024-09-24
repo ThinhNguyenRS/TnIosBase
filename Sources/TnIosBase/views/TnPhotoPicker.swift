@@ -1,6 +1,6 @@
 //
 //  TnPhotoPicker.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 9/9/21.
 //

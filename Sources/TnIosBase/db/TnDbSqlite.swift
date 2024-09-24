@@ -1,6 +1,6 @@
 //
 //  TnDbSqlite.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 08/08/2021.
 //

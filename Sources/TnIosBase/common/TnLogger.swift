@@ -1,6 +1,6 @@
 //
 //  TnLogger.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 8/31/21.
 //

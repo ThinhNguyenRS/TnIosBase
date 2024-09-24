@@ -1,6 +1,6 @@
 //
 //  TnCollectionExtensions.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 12/08/2021.
 //

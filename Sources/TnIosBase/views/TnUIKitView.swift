@@ -1,6 +1,6 @@
 //
 //  TnUIKitView.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 03/08/2021.
 //

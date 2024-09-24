@@ -1,6 +1,6 @@
 //
 //  TnFontExtensions.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 16/08/2021.
 //

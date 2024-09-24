@@ -1,6 +1,6 @@
 //
 //  BottomButtons.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 01/08/2021.
 //

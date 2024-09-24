@@ -1,6 +1,6 @@
 //
 //  TnTimerQueue.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 04/08/2021.
 //

@@ -1,6 +1,6 @@
 //
 //  TnAlert.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 9/15/21.
 //

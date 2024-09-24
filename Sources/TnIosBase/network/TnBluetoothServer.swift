@@ -1,6 +1,6 @@
 //
 //  TnBluetooth.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 06/08/2021.
 //

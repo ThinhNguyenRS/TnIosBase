@@ -1,6 +1,6 @@
 //
 //  TnPickerField.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 8/18/21.
 //
@@ -106,8 +106,8 @@ extension View {
         values: [T],
         labels: [String],
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> TTopView?),
-        bottomView: (() -> TBottomView?),
+        topView: () -> TTopView?,
+        bottomView: () -> TBottomView?,
         padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {
@@ -134,8 +134,8 @@ extension View {
         value: Binding<T>,
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> TTopView?),
-        bottomView: (() -> TBottomView?),
+        topView: () -> TTopView?,
+        bottomView: () -> TBottomView?,
         padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {
@@ -161,7 +161,7 @@ extension View {
         value: Binding<T>,
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
-        topView: (() -> TTopView?) = { nil as EmptyView? },
+        topView: () -> TTopView?,
         padding: CGFloat = 0,
         style: TnPickerStyle = .segmented
     ) -> some View {

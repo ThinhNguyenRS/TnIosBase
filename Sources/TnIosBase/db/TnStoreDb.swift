@@ -1,6 +1,6 @@
 //
 //  TnStore.swift
-//  TkgFaceRecognition
+//  TnIosBase
 //
 //  Created by Thinh Nguyen on 8/21/21.
 //
