@@ -15,14 +15,12 @@ extension View {
     public func tnPickerStyle(_ v: TnPickerStyle) -> some View {
         Group {
             switch v {
-//            case .segmented:
-//                self.pickerStyle(SegmentedPickerStyle())
+            case .segmented:
+                self.pickerStyle(SegmentedPickerStyle())
             case .wheel:
                 self.pickerStyle(WheelPickerStyle())
             case .menu:
                 self.pickerStyle(MenuPickerStyle())
-            default:
-                self.pickerStyle(SegmentedPickerStyle())
             }
         }
     }
@@ -74,7 +72,13 @@ extension View {
     ) -> some View {
         HStack {
             Text(label)
-            tnPickerView(value: value, values: values, labels: labels, style: style)
+            tnPickerView(
+                value: value,
+                values: values,
+                labels: labels,
+                onChanged: onChanged,
+                style: style
+            )
         }
     }
     
@@ -87,7 +91,12 @@ extension View {
     ) -> some View {
         HStack {
             Text(label)
-            tnPickerView(value: value, values: values, style: style)
+            tnPickerView(
+                value: value,
+                values: values,
+                onChanged: onChanged,
+                style: style
+            )
         }
     }
     
@@ -107,7 +116,13 @@ extension View {
             
             topView()
             
-            tnPickerView(value: value, values: values, labels: labels, style: style)
+            tnPickerView(
+                value: value,
+                values: values,
+                labels: labels,
+                onChanged: onChanged,
+                style: style
+            )
             
             bottomView()
         }
@@ -129,7 +144,12 @@ extension View {
             
             topView()
             
-            tnPickerView(value: value, values: values, style: style)
+            tnPickerView(
+                value: value,
+                values: values,
+                onChanged: onChanged,
+                style: style
+            )
             
             bottomView()
         }
@@ -149,6 +169,7 @@ extension View {
             label: label,
             value: value,
             values: values,
+            onChanged: onChanged,
             topView: topView,
             bottomView: { nil as EmptyView? },
             padding: padding,
@@ -168,6 +189,7 @@ extension View {
             label: label,
             value: value,
             values: values,
+            onChanged: onChanged,
             topView: { nil as EmptyView? },
             bottomView: { nil as EmptyView? },
             padding: padding,
