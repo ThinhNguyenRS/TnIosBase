@@ -49,12 +49,33 @@ import SwiftUI
 //    }
 //}
 
+public enum TnPickerStyle {
+    case segmented, wheel, menu
+}
+
 extension View {
+    
+    public func tnPickerStyle(_ v: TnPickerStyle) -> some View {
+        Group {
+            switch v {
+//            case .segmented:
+//                self.pickerStyle(SegmentedPickerStyle())
+            case .wheel:
+                self.pickerStyle(WheelPickerStyle())
+            case .menu:
+                self.pickerStyle(MenuPickerStyle())
+            default:
+                self.pickerStyle(SegmentedPickerStyle())
+            }
+        }
+    }
+
     public func tnPickerView<T: Hashable & Comparable>(
         value: Binding<T>,
         values: [T],
         labels: [String],
-        onChanged: ((T) -> Void)? = nil
+        onChanged: ((T) -> Void)? = nil,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         Picker("", selection: value.projectedValue) {
             tnForEach(values) { idx, value in
@@ -65,12 +86,14 @@ extension View {
         .onChange(of: value.wrappedValue, perform: { _ in
             onChanged?(value.wrappedValue)
         })
+        .tnPickerStyle(style)
     }
     
     public func tnPickerView<T: TnEnum>(
         value: Binding<T>,
         values: [T]? = nil,
-        onChanged: ((T) -> Void)? = nil
+        onChanged: ((T) -> Void)? = nil,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         let valuesToUse = values ?? T.allCases
         let labels = valuesToUse.descriptions
@@ -79,7 +102,8 @@ extension View {
             value: value,
             values: valuesToUse,
             labels: labels,
-            onChanged: onChanged
+            onChanged: onChanged,
+            style: style
         )
     }
     
@@ -88,11 +112,12 @@ extension View {
         value: Binding<T>,
         values: [T],
         labels: [String],
-        onChanged: ((T) -> Void)? = nil
+        onChanged: ((T) -> Void)? = nil,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         HStack {
             Text(label)
-            tnPickerView(value: value, values: values, labels: labels)
+            tnPickerView(value: value, values: values, labels: labels, style: style)
         }
     }
     
@@ -100,11 +125,12 @@ extension View {
         label: String,
         value: Binding<T>,
         values: [T]? = nil,
-        onChanged: ((T) -> Void)? = nil
+        onChanged: ((T) -> Void)? = nil,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         HStack {
             Text(label)
-            tnPickerView(value: value, values: values)
+            tnPickerView(value: value, values: values, style: style)
         }
     }
     
@@ -116,14 +142,15 @@ extension View {
         onChanged: ((T) -> Void)? = nil,
         topView: (() -> TTopView?),
         bottomView: (() -> TBottomView?),
-        padding: CGFloat = 8
+        padding: CGFloat = 8,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         VStack(alignment: .leading) {
             Text(label)
             
             topView()
             
-            tnPickerView(value: value, values: values, labels: labels)
+            tnPickerView(value: value, values: values, labels: labels, style: style)
             
             bottomView()
         }
@@ -137,14 +164,15 @@ extension View {
         onChanged: ((T) -> Void)? = nil,
         topView: (() -> TTopView?),
         bottomView: (() -> TBottomView?),
-        padding: CGFloat = 8
+        padding: CGFloat = 8,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         VStack(alignment: .leading) {
             Text(label)
             
             topView()
             
-            tnPickerView(value: value, values: values)
+            tnPickerView(value: value, values: values, style: style)
             
             bottomView()
         }
@@ -157,14 +185,16 @@ extension View {
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
         topView: (() -> TTopView?) = { nil as EmptyView? },
-        padding: CGFloat = 8
+        padding: CGFloat = 8,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         tnPickerViewVert(
             label: label,
             value: value,
             topView: topView,
             bottomView: { nil as EmptyView? },
-            padding: padding
+            padding: padding,
+            style: style
         )
     }
     
@@ -173,14 +203,16 @@ extension View {
         value: Binding<T>,
         values: [T]? = nil,
         onChanged: ((T) -> Void)? = nil,
-        padding: CGFloat = 8
+        padding: CGFloat = 8,
+        style: TnPickerStyle = .segmented
     ) -> some View {
         tnPickerViewVert(
             label: label,
             value: value,
             topView: { nil as EmptyView? },
             bottomView: { nil as EmptyView? },
-            padding: padding
+            padding: padding,
+            style: style
         )
     }
 }
