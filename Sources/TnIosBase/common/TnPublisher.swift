@@ -30,7 +30,6 @@ extension Published.Publisher {
     public func onReceive(debounceMs: Double, cancellables: inout Set<AnyCancellable>, handler: @escaping (Self.Output) -> Void) {
         self
             .debounce(for: .seconds(debounceMs/1000), scheduler: DispatchQueue.main)
-            .receive(on: DispatchQueue.main)
             .sink(receiveValue: handler)
             .store(in: &cancellables)
     }
@@ -38,7 +37,6 @@ extension Published.Publisher {
     public func onReceive(debounceMs: Double, handler: @escaping (Self.Output) -> Void) {
         self
             .debounce(for: .seconds(debounceMs/1000), scheduler: DispatchQueue.main)
-            .receive(on: DispatchQueue.main)
             .sink(receiveValue: handler)
             .store(in: &tnGlobalCancellables)
     }
@@ -59,14 +57,12 @@ extension Published.Publisher {
     
     public func onReceive(cancellables: inout Set<AnyCancellable>, handler: @escaping (Self.Output) -> Void) {
         self
-            .receive(on: DispatchQueue.main)
             .sink(receiveValue: handler)
             .store(in: &cancellables)
     }
     
     public func onReceive(handler: @escaping (Self.Output) -> Void) {
         self
-            .receive(on: DispatchQueue.main)
             .sink(receiveValue: handler)
             .store(in: &tnGlobalCancellables)
     }
