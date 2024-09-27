@@ -61,7 +61,10 @@ public struct TnSliderField<TValue>: View where TValue : BinaryFloatingPoint & C
             }
         }
         .onAppear {
-            self.value.wrappedValue = value.wrappedValue.valueInRange(bounds)
+            let validValue = value.wrappedValue.valueInRange(bounds)
+            if self.value.wrappedValue != validValue {
+                self.value.wrappedValue = validValue
+            }
         }
     }
 }
