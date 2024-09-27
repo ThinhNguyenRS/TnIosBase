@@ -10,7 +10,7 @@ import Combine
 
 public var tnGlobalCancellables: Set<AnyCancellable> = .init()
 
-extension Published.Publisher {
+extension Publisher where Failure == Never {
     public func onReceive(queue: DispatchQueue, debounceMs: Double, cancellables: inout Set<AnyCancellable>, handler: @escaping (Self.Output) -> Void) {
         self
             .debounce(for: .seconds(debounceMs/1000), scheduler: queue)
