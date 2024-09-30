@@ -77,6 +77,8 @@ public class TnCodablePersistenceController: TnLoggable {
         let item = TnCodableItem(context: container.viewContext)
         item.typeName = "\(T.self)"
         item.jsonData = try object.toJsonData()
+        item.createdAt = .now
+        item.updatedAt = .now
         try self.save()
         return item.objectID
     }
@@ -84,6 +86,7 @@ public class TnCodablePersistenceController: TnLoggable {
     public func update<T>(objectID: NSManagedObjectID, object: T) throws where T: Codable {
         let item = container.viewContext.object(with: objectID) as! TnCodableItem
         item.jsonData = try object.toJsonData()
+        item.updatedAt = .now
         try self.save()
     }
     
