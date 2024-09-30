@@ -8,7 +8,7 @@
 import Foundation
 import CoreData
 
-public struct TnCodablePersistenceController {
+public struct TnCodablePersistenceController: TnLoggable {
     public static let shared = TnCodablePersistenceController()
     
     //    lazy var backgroundContext: NSManagedObjectContext = {
@@ -45,8 +45,14 @@ public struct TnCodablePersistenceController {
     func fetchItems(typeName: String) throws -> [TnCodableItem]? {
         let request = TnCodableItem.fetchRequest();
         request.predicate = .init(format: "typeName == %@", typeName)
-        let results = try viewContext.fetch(request)
-        return results
+        
+        do {
+            let results = try viewContext.fetch(request)
+            return results
+        } catch {
+            logError("fetchItems error", error)
+            throw error
+        }
     }
     
     func fetchItem(typeName: String) throws -> TnCodableItem? {
@@ -73,7 +79,11 @@ public struct TnCodablePersistenceController {
     }
     
     public func save() throws {
-        try viewContext.save()
+        do {
+            try viewContext.save()
+        } catch {
+            logError("save error", error)
+        }
     }
 
     public func add<T>(object: T) throws -> NSManagedObjectID where T: Codable {
