@@ -43,10 +43,10 @@ public protocol TnLoggable {
 
 extension TnLoggable {
     public func logDebug(_ items: Any?...) {
-        TnLogger.debug("\(Self.Type.self)", items)
+        TnLogger.debug("\(Self.self)", items)
     }
     
     public func logError(_ items: Any?...) {
-        TnLogger.error("\(Self.Type.self)", items)
+        TnLogger.error("\(Self.self)", items)
     }
 }
