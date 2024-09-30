@@ -34,7 +34,7 @@ public class TnCodablePersistenceController: TnLoggable {
             let results = try container.viewContext.fetch(request)
             return results
         } catch {
-            logError("fetchItems error", error)
+            logError("fetchItems error", error.localizedDescription)
             throw error
         }
     }
@@ -66,7 +66,7 @@ public class TnCodablePersistenceController: TnLoggable {
         do {
             try container.viewContext.save()
         } catch {
-            logError("save error", error)
+            logError("save error", error.localizedDescription)
         }
     }
 
