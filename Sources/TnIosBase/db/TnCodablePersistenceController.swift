@@ -8,38 +8,22 @@
 import Foundation
 import CoreData
 
-public struct TnCodablePersistenceController: TnLoggable {
+public class TnCodablePersistenceController: TnLoggable {
+    class PersistentContainer: NSPersistentContainer, @unchecked Sendable { }
     public static let shared = TnCodablePersistenceController()
     
-    //    lazy var backgroundContext: NSManagedObjectContext = {
-    //        return self.container.newBackgroundContext()
-    //    }()
-    
-    private var viewContext: NSManagedObjectContext { container.viewContext }
-    private let container: NSPersistentContainer
-    
-    public init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "TnCodableModel")
-        if inMemory {
-            container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
-        }
-        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
-            if let error = error as NSError? {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                
-                /*
-                 Typical reasons for an error here include:
-                 * The parent directory does not exist, cannot be created, or disallows writing.
-                 * The persistent store is not accessible, due to permissions or data protection when the device is locked.
-                 * The device is out of space.
-                 * The store could not be migrated to the current model version.
-                 Check the error message to determine what the actual problem was.
-                 */
-                fatalError("Unresolved error \(error), \(error.userInfo)")
+    private lazy var container: PersistentContainer = {
+        let result = PersistentContainer(name: "TnCodableModel")
+        result.loadPersistentStores { (storeDescription, error) in
+            if let error = error {
+                self.logError("loadPersistentStores", error.localizedDescription)
             }
-        })
-        container.viewContext.automaticallyMergesChangesFromParent = true
+        }
+        return result
+    }()
+    
+    private init() {
+        logDebug("inited")
     }
     
     func fetchItems(typeName: String) throws -> [TnCodableItem]? {
@@ -47,7 +31,7 @@ public struct TnCodablePersistenceController: TnLoggable {
         request.predicate = .init(format: "typeName == %@", typeName)
         
         do {
-            let results = try viewContext.fetch(request)
+            let results = try container.viewContext.fetch(request)
             return results
         } catch {
             logError("fetchItems error", error)
@@ -80,14 +64,14 @@ public struct TnCodablePersistenceController: TnLoggable {
     
     public func save() throws {
         do {
-            try viewContext.save()
+            try container.viewContext.save()
         } catch {
             logError("save error", error)
         }
     }
 
     public func add<T>(object: T) throws -> NSManagedObjectID where T: Codable {
-        let item = TnCodableItem(context: viewContext)
+        let item = TnCodableItem(context: container.viewContext)
         item.typeName = "\(T.self)"
         item.jsonData = try object.toJsonData()
         try self.save()
@@ -95,14 +79,14 @@ public struct TnCodablePersistenceController: TnLoggable {
     }
 
     public func update<T>(objectID: NSManagedObjectID, object: T) throws where T: Codable {
-        let item = viewContext.object(with: objectID) as! TnCodableItem
+        let item = container.viewContext.object(with: objectID) as! TnCodableItem
         item.jsonData = try object.toJsonData()
         try self.save()
     }
     
     public func delete(objectID: NSManagedObjectID) throws {
-        let item = viewContext.object(with: objectID)
-        viewContext.delete(item)
+        let item = container.viewContext.object(with: objectID)
+        container.viewContext.delete(item)
         try self.save()
     }
 
