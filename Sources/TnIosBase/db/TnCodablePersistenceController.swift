@@ -13,7 +13,10 @@ public class TnCodablePersistenceController: TnLoggable {
     public static let shared = TnCodablePersistenceController()
     
     private lazy var container: PersistentContainer = {
-        let result = PersistentContainer(name: "TnCodableModel")
+        let modelURL = Bundle.module.url(forResource: "TnCodableModel", withExtension: ".momd")!
+        let model = NSManagedObjectModel(contentsOf: modelURL)!
+
+        let result = PersistentContainer(name: "TnCodableModel", managedObjectModel: model)
         result.loadPersistentStores { (storeDescription, error) in
             if let error = error {
                 self.logError("loadPersistentStores", error.localizedDescription)
