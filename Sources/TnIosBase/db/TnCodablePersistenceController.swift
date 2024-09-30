@@ -19,7 +19,7 @@ public struct TnCodablePersistenceController: TnLoggable {
     private let container: NSPersistentContainer
     
     public init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "TnCodablePersistenceContainer")
+        container = NSPersistentContainer(name: "TnCodableModel")
         if inMemory {
             container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
         }
