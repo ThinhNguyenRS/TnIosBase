@@ -41,7 +41,7 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
     private let delegate: TnNetworkDelegateServer?
     private let EOM: Data
     private let MTU: Int
-
+    
     public init(host: String, port: UInt16, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, EOM: Data, MTU: Int) {
         self.host = host
         self.port = port
@@ -80,7 +80,7 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
     
     private func didAccept(nwConnection: NWConnection) {
         logDebug("accepting")
-
+        
         let connection = TnNetworkConnectionServer(nwConnection: nwConnection, queue: queue, delegate: self, EOM: EOM, MTU: MTU)
         self.connectionsByID[connection.id] = connection
         connection.start()
@@ -106,10 +106,16 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
         
         listener.start(queue: queue)
     }
-
+    
     public func send(_ data: Data) {
         for connection in connectionsByID.values {
             connection.send(data)
+        }
+    }
+    
+    public func sendAsync(_ data: Data) async throws {
+        for connection in connectionsByID.values {
+            try await connection.sendAsync(data)
         }
     }
 }
