@@ -118,6 +118,10 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
             try await connection.sendAsync(data)
         }
     }
+    
+    var connectionCount: Int {
+        connectionsByID.count
+    }
 }
 
 extension TnNetworkServer: TnNetworkDelegate {
