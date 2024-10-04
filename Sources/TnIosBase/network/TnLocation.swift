@@ -8,7 +8,7 @@
 import Foundation
 import CoreLocation
 
-public class TnLocation: NSObject, ObservableObject {
+public class TnLocation: NSObject, ObservableObject, TnLoggable {
     private let locationManager: CLLocationManager
     private var completion: ((CLLocation?) -> Void)? = nil
     
@@ -52,5 +52,9 @@ extension TnLocation: CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         location = locations.first
         completion?(locations.first)
+    }
+    
+    public func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
+        logError(error)
     }
 }
