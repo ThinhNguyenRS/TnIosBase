@@ -32,12 +32,9 @@ public actor TnCodablePersistenceController: TnLoggable {
         let request = TnCodableItem.fetchRequest();
         request.predicate = .init(format: "typeName == %@", typeName)
         
-        do {
+        return try tnDoCatch(name: "fetchItems") { [self] in
             let results = try container.viewContext.fetch(request)
             return results
-        } catch {
-            logError("fetchItems error", error.localizedDescription)
-            throw error
         }
     }
     
@@ -65,7 +62,9 @@ public actor TnCodablePersistenceController: TnLoggable {
     }
     
     public func save() throws {
-        try container.viewContext.save()
+        try tnDoCatch(name: "save") {
+            try self.container.viewContext.save()
+        }
     }
 
     public func add<T>(object: T) throws -> NSManagedObjectID where T: Codable {

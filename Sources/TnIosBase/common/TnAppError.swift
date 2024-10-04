@@ -31,3 +31,21 @@ extension TnAppError: LocalizedError {
         .general(message: "\(errorString): \(error?.localizedDescription ?? "")")
     }
 }
+
+public func tnDoCatch(name: String, action: @escaping () throws -> Void) throws {
+    do {
+        try action()
+    } catch {
+        TnLogger.error(name, error.localizedDescription)
+        throw error
+    }
+}
+
+public func tnDoCatch<T>(name: String, action: @escaping () throws -> T) throws -> T {
+    do {
+        return try action()
+    } catch {
+        TnLogger.error(name, error.localizedDescription)
+        throw error
+    }
+}
