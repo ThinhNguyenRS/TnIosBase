@@ -285,10 +285,14 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
         }
     }
 
-    private func sendAsync(_ data: Data?, withEOM: Bool = false) async throws {
+    public func sendAsync(_ data: Data?) async throws {
+        guard connection.state == .ready else {
+            return
+        }
+
         // append EOM
         var dataToSend = data
-        if dataToSend != nil && withEOM {
+        if dataToSend != nil {
             dataToSend!.append(EOM)
         }
         
@@ -306,15 +310,9 @@ public class TnNetworkConnection: TnNetwork, TnTransportableProtocol {
     }
 
     public func send(_ data: Data) {
-        guard connection.state == .ready else {
-            return
-        }
-        
         Task {
-            do {
-                try await sendAsync(data, withEOM: true)
-                logDebug("sent", data.count)
-            } catch {
+            try await tnDoCatchAsync(name: "send") {
+                try await self.sendAsync(data)
             }
         }
     }

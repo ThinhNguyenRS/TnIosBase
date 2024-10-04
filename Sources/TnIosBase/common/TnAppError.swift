@@ -49,3 +49,12 @@ public func tnDoCatch<T>(name: String, action: @escaping () throws -> T) throws 
         throw error
     }
 }
+
+public func tnDoCatchAsync(name: String, action: @escaping () async throws -> Void) async throws {
+    do {
+        try await action()
+    } catch {
+        TnLogger.error(name, error.localizedDescription)
+        throw error
+    }
+}
