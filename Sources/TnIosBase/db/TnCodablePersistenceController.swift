@@ -8,8 +8,7 @@
 import Foundation
 import CoreData
 
-public class TnCodablePersistenceController: TnLoggable {
-    class PersistentContainer: NSPersistentContainer, @unchecked Sendable { }
+public actor TnCodablePersistenceController: TnLoggable {
     public static let shared = TnCodablePersistenceController()
     
     private lazy var container: NSPersistentContainer = {
@@ -66,11 +65,7 @@ public class TnCodablePersistenceController: TnLoggable {
     }
     
     public func save() throws {
-        do {
-            try container.viewContext.save()
-        } catch {
-            logError("save error", error.localizedDescription)
-        }
+        try container.viewContext.save()
     }
 
     public func add<T>(object: T) throws -> NSManagedObjectID where T: Codable {
