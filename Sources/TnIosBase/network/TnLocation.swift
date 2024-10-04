@@ -39,23 +39,24 @@ public class TnLocation: NSObject, ObservableObject, TnLoggable {
         locationManager.requestLocation()
     }
     
-//    public func request() async -> CLLocation? {
-//        await withCheckedContinuation { continuation in
-//            self.request { location in
-//                continuation.resume(returning: location)
-//            }
-//        }
-//    }
+    public func request() async -> CLLocation? {
+        await withCheckedContinuation { continuation in
+            self.request { location in
+                continuation.resume(returning: location)
+            }
+        }
+    }
 }
 
 extension TnLocation: CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        logDebug("got location")
         location = locations.last
         completion?(location)
     }
     
     public func locationManager(_ manager: CLLocationManager, didFailWithError error: any Error) {
-        logError(error)
+        logError("location error", error)
         location = nil
         completion?(location)
     }
