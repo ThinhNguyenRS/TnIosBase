@@ -56,7 +56,7 @@ public actor TnCodablePersistenceController: TnLoggable {
     }
     
     public func fetch<T>(defaultObject: @escaping () -> T) throws -> (objectID: NSManagedObjectID, object: T) where T: Codable {
-        if let objPair: (NSManagedObjectID, T) = try self.fetch() {
+        if let objPair: (NSManagedObjectID, T) = try? self.fetch() {
             return objPair
         }
         let obj = defaultObject()
