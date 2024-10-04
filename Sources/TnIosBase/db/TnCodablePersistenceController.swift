@@ -40,7 +40,7 @@ public actor TnCodablePersistenceController: TnLoggable {
     
     func fetchItem(typeName: String) throws -> TnCodableItem? {
         let results = try self.fetchItems(typeName: typeName)
-        return results?.first
+        return results?.last
     }
     
     public func fetch<T>() throws -> (objectID: NSManagedObjectID, object: T)? where T: Codable {
