@@ -20,6 +20,9 @@ public class TnLocation: NSObject, ObservableObject {
         if locationManager.authorizationStatus == .notDetermined {
             locationManager.requestWhenInUseAuthorization()
         }
+        super.init()
+        
+        locationManager.delegate = self
     }
     
     public func start(completion: @escaping (CLLocation?) -> Void) {
