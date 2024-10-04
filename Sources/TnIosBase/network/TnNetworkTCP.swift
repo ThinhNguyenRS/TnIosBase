@@ -119,8 +119,12 @@ public class TnNetworkServer: TnNetwork, TnTransportableProtocol {
         }
     }
     
-    var connectionCount: Int {
+    public var connectionCount: Int {
         connectionsByID.count
+    }
+    
+    public var hasConnections: Bool {
+        !connectionsByID.isEmpty
     }
 }
 
