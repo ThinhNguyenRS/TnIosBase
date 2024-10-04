@@ -42,6 +42,8 @@ public class TnLocation: NSObject, ObservableObject, TnLoggable {
     public func request() async -> CLLocation? {
         await withCheckedContinuation { continuation in
             self.request { location in
+                // reset the completion
+                self.completion = nil
                 continuation.resume(returning: location)
             }
         }
