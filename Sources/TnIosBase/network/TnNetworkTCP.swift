@@ -250,99 +250,6 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
     }
 }
 
-//// MARK: receiving async old
-//extension TnNetworkConnection {
-//    private func receiveChunkAsync() async -> TnNetworkReceiveData {
-//        return await withCheckedContinuation { continuation in
-//            connection.receive(minimumIncompleteLength: 1, maximumLength: transportingInfo.MTU) { content, context, isComplete, error in
-//                continuation.resume(
-//                    returning: TnNetworkReceiveData(content: content, context: context, isComplete: isComplete, error: error)
-//                )
-//            }
-//        }
-//    }
-//
-//    private func receiveAsync() async throws -> [Data]? {
-//        let result = await receiveChunkAsync()
-//        
-//        var parts: [Data]? = nil
-//        
-//        if let error = result.error {
-//            stop(error: error)
-//            throw TnAppError.general(message: "Receive error: \(error.localizedDescription)")
-//        } else if result.isComplete {
-//            stop(error: nil)
-//            throw TnAppError.general(message: "Receive error: The connection is closed")
-//        } else {
-//            if let data = result.content, !data.isEmpty {
-//                logDebug("receiving", data.count)
-//                // receive data, add to queue
-//                dataQueue.append(data)
-//                
-//                // detect EOM
-//                if dataQueue.count > transportingInfo.EOM.count {
-//                    let eomAssume = dataQueue.suffix(transportingInfo.EOM.count)
-//                    if eomAssume == transportingInfo.EOM {
-//                        // get received data
-//                        let receivedData = dataQueue[0...dataQueue.count-transportingInfo.EOM.count-1]
-//                        logDebug("received", receivedData.count)
-//                        
-//                        parts = receivedData.split(separator: transportingInfo.EOM)
-//
-//                        // reset data queue
-//                        dataQueue.removeAll()
-//                    }
-//                }
-//            }
-//        }
-//        
-//        return parts
-//    }
-//    
-//    private func startReceiveAsync() {
-//        Task {
-//            let sleepNanos: UInt64 = 10_1000_1000
-//            while connection.state == .ready {
-//                if let parts = try await receiveAsync() {
-//                    for part in parts {
-//                        // signal
-//                        delegate?.tnNetwork(self, receivedData: part)
-//                    }
-//                }
-//                
-//                try await Task.sleep(nanoseconds: sleepNanos)
-//            }
-//        }
-//    }
-//}
-//
-//// MARK: send async old
-//extension TnNetworkConnection {
-//    private func sendAsyncOld(_ data: Data?) async throws {
-//        guard connection.state == .ready else {
-//            return
-//        }
-//
-//        // append EOM
-//        var dataToSend = data
-//        if dataToSend != nil {
-//            dataToSend!.append(transportingInfo.EOM)
-//        }
-//        
-//        return try await withCheckedThrowingContinuation { continuation in
-//            self.connection.send(content: dataToSend, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
-//                if let error = error {
-//                    logError("send error", error.localizedDescription)
-//                    stop(error: error)
-//                    continuation.resume(throwing: error)
-//                } else {
-//                    continuation.resume(returning: Void())
-//                }
-//            }))
-//        }
-//    }
-//}
-
 // MARK: receiving async new
 extension TnNetworkConnection {
     private func receiveChunk(minSize: Int, maxSize: Int) async throws -> Data? {
@@ -355,7 +262,7 @@ extension TnNetworkConnection {
                     self.stop(error: nil)
                     continuation.resume(throwing: TnAppError.general(message: "Receive error: The connection is closed"))
                 } else {
-                    self.logDebug("receiving", content?.count)
+                    self.logDebug("receive chunk", content?.count)
                     continuation.resume(
                         returning: content
                     )
@@ -369,11 +276,13 @@ extension TnNetworkConnection {
             let msgSize = msgSizeData.withUnsafeBytes {
                 $0.load(as: Int.self)
             }
+            self.logDebug("received msgSize", msgSize)
+
             guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
                 throw TnAppError.general(message: "Receive error: Message corrupted")
             }
 
-            self.logDebug("received", msgData.count)
+            self.logDebug("received msg", msgData.count)
             return msgData
         }
         
