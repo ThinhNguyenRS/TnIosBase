@@ -266,6 +266,7 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
             throw TnAppError.general(message: "Receive error: The connection is closed")
         } else {
             if let data = result.content, !data.isEmpty {
+                logDebug("receiving", data.count)
                 // receive data, add to queue
                 dataQueue.append(data)
                 
