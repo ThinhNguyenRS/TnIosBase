@@ -24,10 +24,12 @@ public struct TnNetworkTransportingInfo {
     public let EOM: Data
     public let MTU: Int
     public let encoder: TnEncoder
-    
-    public init(EOM: Data, MTU: Int, encoder: TnEncoder) {
+    public let decoder: TnDecoder
+
+    public init(EOM: Data, MTU: Int, encoder: TnEncoder, decoder: TnDecoder) {
         self.EOM = EOM
         self.MTU = MTU
         self.encoder = encoder
+        self.decoder = decoder
     }
 }

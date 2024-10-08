@@ -153,10 +153,14 @@ extension TnNetworkServer: TnNetworkDelegate {
 }
 
 extension TnNetworkServer: TnTransportableProtocol {
-    public func send(object: TnMessageProtocol) throws {
-        try self.send(object.toMessage(encoder: transportingInfo.encoder).data)
+    public var encoder: TnEncoder {
+        transportingInfo.encoder
     }
     
+    public var decoder: any TnDecoder {
+        transportingInfo.decoder
+    }
+
     public func send(_ data: Data) {
         for connection in connectionsByID.values {
             connection.send(data)
@@ -339,10 +343,14 @@ public class TnNetworkConnection: TnNetwork, TnLoggable {
 }
 
 extension TnNetworkConnection: TnTransportableProtocol {
-    public func send(object: TnMessageProtocol) throws {
-        try self.send(object.toMessage(encoder: transportingInfo.encoder).data)
+    public var encoder: TnEncoder {
+        transportingInfo.encoder
     }
     
+    public var decoder: any TnDecoder {
+        transportingInfo.decoder
+    }
+
     public func send(_ data: Data) {
         Task {
             try await tnDoCatchAsync(name: "send") {

@@ -298,10 +298,14 @@ extension TnBluetoothServer {
 }
 
 extension TnBluetoothServer: TnTransportableProtocol {
-    public func send(object: TnMessageProtocol) throws {
-        try self.send(data: object.toMessage(encoder: transportingInfo.encoder).data, centralIDs: nil)
+    public var encoder: TnEncoder {
+        transportingInfo.encoder
     }
     
+    public var decoder: any TnDecoder {
+        transportingInfo.decoder
+    }
+
     public func send(_ data: Data) {
         self.send(data: data, centralIDs: nil)
     }

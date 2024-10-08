@@ -437,8 +437,12 @@ extension TnBluetoothClient {
 }
 
 extension TnBluetoothClient: TnTransportableProtocol {
-    public func send(object: TnMessageProtocol) throws {
-        try self.send(data: object.toMessage(encoder: transportingInfo.encoder).data, peripheralIDs: nil)
+    public var encoder: TnEncoder {
+        transportingInfo.encoder
+    }
+    
+    public var decoder: any TnDecoder {
+        transportingInfo.decoder
     }
     
     public func send(_ data: Data) {
