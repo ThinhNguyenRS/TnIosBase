@@ -9,9 +9,11 @@ import Foundation
 import Network
 
 public protocol TnNetworkDelegate {
-    func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data)
-    func tnNetwork(_ connection: TnNetworkConnection, sentData: Data)
-
+//    func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data)
+//    func tnNetwork(_ connection: TnNetworkConnection, sentData: Data)
+    
+    func tnNetworkSent(_ connection: TnNetworkConnection)
+    func tnNetworkReceived(_ connection: TnNetworkConnection)
     func tnNetworkReady(_ connection: TnNetworkConnection)
     func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?)
 }
@@ -19,11 +21,10 @@ public protocol TnNetworkDelegate {
 public protocol TnNetworkDelegateServer {
     func tnNetworkReady(_ server: TnNetworkServer)
     func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
-
-    func tnNetwork(_ server: TnNetworkServer, accepted: TnNetworkConnectionServer)
-    func tnNetwork(_ server: TnNetworkServer, stopped: TnNetworkConnectionServer, error: Error?)
-    func tnNetwork(_ server: TnNetworkServer, connection: TnNetworkConnection, receivedData: Data)
-    func tnNetwork(_ server: TnNetworkServer, connection: TnNetworkConnection, sentData: Data)
+    func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnectionServer, error: Error?)
+    func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnectionServer)
+    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection)
+    func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection)
 }
 
 public struct TnNetworkHostInfo: Codable {
@@ -123,7 +124,7 @@ extension TnNetworkServer: TnNetworkDelegate {
         logDebug("accepted", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetwork(self, accepted: connectionServer)
+        delegate?.tnNetworkAccepted(self, connection: connectionServer)
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
@@ -131,21 +132,21 @@ extension TnNetworkServer: TnNetworkDelegate {
 
         let connectionServer = connection as! TnNetworkConnectionServer
         self.connectionsByID.removeValue(forKey: connectionServer.id)
-        delegate?.tnNetwork(self, stopped: connectionServer, error: error)
+        delegate?.tnNetworkStop(self, connection: connectionServer, error: error)
     }
 
-    public func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data) {
-        logDebug("received from", connection.hostInfo.host, receivedData.count)
+    public func tnNetworkReceived(_ connection: TnNetworkConnection) {
+        logDebug("received from", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetwork(self, connection: connectionServer, receivedData: receivedData)
+        delegate?.tnNetworkReceived(self, connection: connectionServer)
     }
     
-    public func tnNetwork(_ connection: TnNetworkConnection, sentData: Data) {
-        logDebug("sent to", connection.hostInfo.host, sentData.count)
+    public func tnNetworkSent(_ connection: TnNetworkConnection) {
+        logDebug("sent to", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetwork(self, connection: connectionServer, sentData: sentData)
+        delegate?.tnNetworkSent(self, connection: connectionServer)
     }
 }
 
@@ -165,14 +166,6 @@ extension TnNetworkServer: TnTransportableProtocol {
     }
 }
 
-// MARK: TnNetworkReceiveData
-public struct TnNetworkReceiveData {
-    public let content: Data?
-    public let context: NWConnection.ContentContext?
-    public let isComplete: Bool
-    public let error: NWError?
-}
-
 // MARK: TnNetworkConnection
 public class TnNetworkConnection: TnLoggable {
     public let hostInfo: TnNetworkHostInfo
@@ -180,14 +173,17 @@ public class TnNetworkConnection: TnLoggable {
     public var delegate: TnNetworkDelegate? = nil
     private let connection: NWConnection
     private let queue: DispatchQueue
-    private var dataQueue: Data = .init()
-    
     private let transportingInfo: TnNetworkTransportingInfo
+    
+    
+    private let msgQueueQueue: DispatchQueue
+    private var msgQueue: [Data] = []
         
     public init(nwConnection: NWConnection, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.connection = nwConnection
         self.hostInfo = nwConnection.endpoint.getHostInfo()
         self.queue = DispatchQueue(label: "\(Self.self).queue")
+        self.msgQueueQueue = DispatchQueue(label: "\(Self.self).msgQueue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -198,6 +194,7 @@ public class TnNetworkConnection: TnLoggable {
         self.hostInfo = hostInfo
         self.connection = NWConnection(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!, using: .tcp)
         self.queue = DispatchQueue(label: "\(Self.self).queue")
+        self.msgQueueQueue = DispatchQueue(label: "\(Self.self).msgQueue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -294,14 +291,26 @@ extension TnNetworkConnection {
             while connection.state == .ready {
                 logDebug("startReceiveMsg ...")
                 if let msgData = try await self.receiveMsg() {
-                    Task {
+                    // add to queue
+                    msgQueueQueue.async { [self] in
+                        msgQueue.append(msgData)
+
                         // signal
-                        delegate?.tnNetwork(self, receivedData: msgData)
+                        delegate?.tnNetworkReceived(self)
                     }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
             logDebug("startReceiveMsg done", connection.state)
+        }
+    }
+    
+    public func processMsgQueue(action: @escaping (Data) -> Void) {
+        msgQueueQueue.async { [self] in
+            while !msgQueue.isEmpty {
+                let msgData = msgQueue.removeFirst()
+                action(msgData)
+            }
         }
     }
 }
@@ -330,6 +339,8 @@ extension TnNetworkConnection {
         }
         try await sendChunk(msgSizeData)
         try await sendChunk(msgData)
+        delegate?.tnNetworkSent(self)
+        
         try await Task.sleep(nanoseconds: 1_000_000)
     }
 }
