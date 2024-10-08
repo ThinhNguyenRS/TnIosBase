@@ -383,7 +383,9 @@ extension TnNetworkConnection {
     private func startReceiveMsg() {
         Task {
             while connection.state == .ready {
-                if let msgData = try await receiveMsg() {
+                if let msgData = try await tnDoCatchAsync(name: "receiveMsg", action: {
+                    try await self.receiveMsg()
+                }) {
                     // signal
                     delegate?.tnNetwork(self, receivedData: msgData)
                 }
