@@ -107,7 +107,8 @@ public class TnBluetoothServer: NSObject {
         }
     }
     
-    public let info: TnNetworkServiceInfo
+    private let bleInfo: TnNetworkBleInfo
+    private let transportingInfo: TnNetworkTransportingInfo
     private var status: Status = .none
     
     private var peripheralManager: CBPeripheralManager?
@@ -121,15 +122,16 @@ public class TnBluetoothServer: NSObject {
 
     private var dataQueue: [String: Data] = [:]
 
-    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothServerDelegate? = nil) {
-        self.info = info
+    public init(bleInfo: TnNetworkBleInfo, delegate: TnBluetoothServerDelegate? = nil, transportingInfo: TnNetworkTransportingInfo) {
+        self.bleInfo = bleInfo
         self.delegate = delegate
         self.transferCharacteristic = CBMutableCharacteristic(
-            type: info.bleCharacteristicUUID,
+            type: bleInfo.bleCharacteristicUUID,
             properties: [.notify, .writeWithoutResponse],
             value: nil,
             permissions: [.readable, .writeable]
         )
+        self.transportingInfo = transportingInfo
     }
     
     deinit {
@@ -203,7 +205,7 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
             if data.isEmpty {
                 logDebug("receiving", request.central.identifier.uuidString)
             }
-            let receiveMessage = requestValue.count == info.EOM.count && requestValue == info.EOM
+            let receiveMessage = requestValue.count == transportingInfo.EOM.count && requestValue == transportingInfo.EOM
             if !receiveMessage {
                 // received chunk
                 // append chunk
@@ -237,7 +239,7 @@ extension TnBluetoothServer {
         // Build our service.
         
         // Create a service from the characteristic.
-        let transferService = CBMutableService(type: info.bleServiceUUID, primary: true)
+        let transferService = CBMutableService(type: bleInfo.bleServiceUUID, primary: true)
         
         // Add the characteristic to the service.
         transferService.characteristics = [transferCharacteristic]
@@ -257,7 +259,7 @@ extension TnBluetoothServer {
         guard let peripheralManager else {
             return
         }
-        peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [info.bleServiceUUID]])
+        peripheralManager.startAdvertising([CBAdvertisementDataServiceUUIDsKey: [bleInfo.bleServiceUUID]])
         
         status = .started
         logDebug("started")
@@ -278,7 +280,7 @@ extension TnBluetoothServer {
         delegate?.tnBluetoothServer(ble: self, statusChanged: status)
     }
     
-    public func send(data: Data, centralIDs: [String]? = nil) {
+    public func send(data: Data, centralIDs: [String]?) {
         guard !self.connectedCentrals.isEmpty, sendingWorker == nil else {
             return
         }
@@ -290,22 +292,16 @@ extension TnBluetoothServer {
             outer: self,
             centrals: centrals,
             data: data,
-            EOM: info.EOM
+            EOM: transportingInfo.EOM
         )
     }
 }
 
-extension TnBluetoothServer {
-    public func send(msg: TnMessage, centralIDs: [String]? = nil) {
-        self.send(data: msg.data, centralIDs: centralIDs)
+extension TnBluetoothServer: TnTransportableProtocol {
+    public func send(object: TnMessageProtocol) throws {
+        try self.send(data: object.toMessage(encoder: transportingInfo.encoder).data, centralIDs: nil)
     }
     
-    public func send(object: TnMessageProtocol, centralIDs: [String]? = nil) throws {
-        self.send(msg: try object.toMessage(encoder: info.encoder), centralIDs: centralIDs)
-    }
-}
-
-extension TnBluetoothServer: TnTransportableProtocol {
     public func send(_ data: Data) {
         self.send(data: data, centralIDs: nil)
     }
