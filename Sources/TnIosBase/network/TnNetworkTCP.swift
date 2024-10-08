@@ -46,9 +46,9 @@ public class TnNetworkServer: TnLoggable {
     public var delegate: TnNetworkDelegateServer? = nil
     private let transportingInfo: TnNetworkTransportingInfo
     
-    public init(hostInfo: TnNetworkHostInfo, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, transportingInfo: TnNetworkTransportingInfo) {
+    public init(hostInfo: TnNetworkHostInfo, delegate: TnNetworkDelegateServer?, transportingInfo: TnNetworkTransportingInfo) {
         self.hostInfo = hostInfo
-        self.queue = queue
+        self.queue = DispatchQueue(label: "\(Self.self).queue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -83,7 +83,7 @@ public class TnNetworkServer: TnLoggable {
     private func didAccept(nwConnection: NWConnection) {
         logDebug("accepting")
         
-        let connection = TnNetworkConnectionServer(nwConnection: nwConnection, queue: queue, delegate: self, transportingInfo: transportingInfo)
+        let connection = TnNetworkConnectionServer(nwConnection: nwConnection, delegate: self, transportingInfo: transportingInfo)
         self.connectionsByID[connection.id] = connection
         connection.start()
     }
@@ -174,7 +174,7 @@ public struct TnNetworkReceiveData {
 }
 
 // MARK: TnNetworkConnection
-public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
+public class TnNetworkConnection: TnLoggable {
     public let hostInfo: TnNetworkHostInfo
 
     public var delegate: TnNetworkDelegate? = nil
@@ -184,20 +184,20 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
     
     private let transportingInfo: TnNetworkTransportingInfo
         
-    public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
+    public init(nwConnection: NWConnection, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.connection = nwConnection
         self.hostInfo = nwConnection.endpoint.getHostInfo()
-        self.queue = queue ?? DispatchQueue(label: "\(Self.Type.self).queue")
+        self.queue = DispatchQueue(label: "\(Self.self).queue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
         logDebug("inited incoming", hostInfo.host)
     }
     
-    public init(hostInfo: TnNetworkHostInfo, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
+    public init(hostInfo: TnNetworkHostInfo, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.hostInfo = hostInfo
         self.connection = NWConnection(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!, using: .tcp)
-        self.queue = queue ?? DispatchQueue(label: "\(Self.Type.self).queue")
+        self.queue = DispatchQueue(label: "\(Self.self).queue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -358,10 +358,10 @@ public class TnNetworkConnectionServer: TnNetworkConnection {
     private static var nextID: Int = 0
     let id: Int
 
-    override init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
+    override init(nwConnection: NWConnection, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.id = Self.nextID
         Self.nextID += 1
-        super.init(nwConnection: nwConnection, queue: queue, delegate: delegate, transportingInfo: transportingInfo)
+        super.init(nwConnection: nwConnection, delegate: delegate, transportingInfo: transportingInfo)
     }
 }
 
