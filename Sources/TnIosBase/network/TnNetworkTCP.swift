@@ -277,14 +277,12 @@ extension TnNetworkConnection {
                 $0.load(as: Int.self)
             }
             self.logDebug("received msgSize", msgSize)
-            if msgSize > 0 {
-                guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
-                    throw TnAppError.general(message: "Receive error: Message corrupted")
-                }
-
-                self.logDebug("received msg", msgData.count)
-                return msgData
+            guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
+                throw TnAppError.general(message: "Receive error: Message corrupted")
             }
+
+            self.logDebug("received msg", msgData.count)
+            return msgData
         }
         
         return nil
@@ -301,7 +299,7 @@ extension TnNetworkConnection {
                     // signal
                     delegate?.tnNetwork(self, receivedData: msgData)
                 }
-//                try await Task.sleep(nanoseconds: 10_1000_1000)
+                try await Task.sleep(nanoseconds: 1_000_1000)
             }
             logDebug("startReceiveMsg done", connection.state)
         }
@@ -332,6 +330,7 @@ extension TnNetworkConnection {
         }
         try await sendChunk(msgSizeData)
         try await sendChunk(msgData)
+        try await Task.sleep(nanoseconds: 1_000_000)
     }
 }
 
