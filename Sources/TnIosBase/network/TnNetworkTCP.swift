@@ -183,7 +183,7 @@ public struct TnNetworkReceiveData {
 public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
     public let hostInfo: TnNetworkHostInfo
 
-    private let delegate: TnNetworkDelegate?
+    public var delegate: TnNetworkDelegate? = nil
     private let connection: NWConnection
     private let queue: DispatchQueue
     private var dataQueue: Data = .init()
