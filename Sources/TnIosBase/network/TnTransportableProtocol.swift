@@ -8,19 +8,19 @@
 import Foundation
 
 public protocol TnTransportableProtocol: TnLoggable {
-    func send(_ data: Data)
+    func send(_ data: Data) async throws
     var encoder: TnEncoder { get }
     var decoder: TnDecoder { get }
 }
 
 extension TnTransportableProtocol {
-    public func send(msg: TnMessage) {
+    public func send(msg: TnMessage) async throws {
         logDebug("send typeCode", msg.typeCode)
-        self.send(msg.data)
+        try await self.send(msg.data)
     }
     
-    public func send(object: TnMessageProtocol) throws {
-        try self.send(msg: object.toMessage(encoder: encoder))
+    public func send(object: TnMessageProtocol) async throws {
+        try await self.send(msg: object.toMessage(encoder: encoder))
     }
 }
 

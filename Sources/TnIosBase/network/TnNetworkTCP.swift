@@ -109,12 +109,6 @@ public class TnNetworkServer: TnLoggable {
         listener.start(queue: queue)
     }
     
-    public func sendAsync(_ data: Data) async throws {
-        for connection in connectionsByID.values {
-            try await connection.sendAsync(data)
-        }
-    }
-    
     public var connectionCount: Int {
         connectionsByID.count
     }
@@ -164,9 +158,9 @@ extension TnNetworkServer: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data) {
+    public func send(_ data: Data) async throws {
         for connection in connectionsByID.values {
-            connection.send(data)
+            try await connection.send(data)
         }
     }
 }
@@ -226,8 +220,9 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
         
         switch state {
         case .ready:
-            logDebug("ready", "maximumDatagramSize", connection.maximumDatagramSize)
-            startReceiveAsync()
+            logDebug("ready")
+//            startReceiveAsync()
+            startReceiveMsg()
             delegate?.tnNetworkReady(self)
         case .waiting(let error):
             logDebug("waiting", error)
@@ -243,6 +238,20 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
         }
     }
     
+    public func start() {
+        logDebug("starting")
+
+        connection.stateUpdateHandler = self.onStateChanged(to:)        
+        connection.start(queue: queue)
+    }
+    
+    public func stop() {
+        stop(error: nil)
+    }
+}
+
+// MARK: receiving async old
+extension TnNetworkConnection {
     private func receiveChunkAsync() async -> TnNetworkReceiveData {
         return await withCheckedContinuation { continuation in
             connection.receive(minimumIncompleteLength: 1, maximumLength: transportingInfo.MTU) { content, context, isComplete, error in
@@ -305,8 +314,11 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
             }
         }
     }
+}
 
-    public func sendAsync(_ data: Data?) async throws {
+// MARK: send async old
+extension TnNetworkConnection {
+    private func sendAsyncOld(_ data: Data?) async throws {
         guard connection.state == .ready else {
             return
         }
@@ -329,16 +341,81 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
             }))
         }
     }
+}
 
-    public func start() {
-        logDebug("starting")
-
-        connection.stateUpdateHandler = self.onStateChanged(to:)        
-        connection.start(queue: queue)
+// MARK: receiving async new
+extension TnNetworkConnection {
+    private func receiveChunk(minSize: Int, maxSize: Int) async throws -> Data? {
+        return try await withCheckedThrowingContinuation { continuation in
+            connection.receive(minimumIncompleteLength: minSize, maximumLength: maxSize) { content, context, isComplete, error in
+                if let error {
+                    self.stop(error: error)
+                    continuation.resume(throwing: error)
+                } else if isComplete {
+                    self.stop(error: nil)
+                    continuation.resume(throwing: TnAppError.general(message: "Receive error: The connection is closed"))
+                } else {
+                    continuation.resume(
+                        returning: content
+                    )
+                }
+            }
+        }
     }
     
-    public func stop() {
-        stop(error: nil)
+    private func receiveMsg() async throws -> Data? {
+        if let msgSizeData = try await receiveChunk(minSize: MemoryLayout<Int>.size, maxSize: MemoryLayout<Int>.size) {
+            let msgSize = msgSizeData.withUnsafeBytes {
+                $0.load(as: Int.self)
+            }
+            let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize)
+            if msgData == nil || msgData!.count != msgSize {
+                throw TnAppError.general(message: "Receive error: Message corrupted")
+            }
+            
+            return msgData
+        }
+        
+        return nil
+    }
+    
+    private func startReceiveMsg() {
+        Task {
+            let sleepNanos: UInt64 = 10_1000_1000
+            while connection.state == .ready {
+                if let msgData = try await receiveMsg() {
+                    // signal
+                    delegate?.tnNetwork(self, receivedData: msgData)
+                }
+                
+                try await Task.sleep(nanoseconds: sleepNanos)
+            }
+        }
+    }
+}
+
+// MARK: send async new
+extension TnNetworkConnection {
+    private func sendChunk(_ data: Data) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            self.connection.send(content: data, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
+                if let error = error {
+                    logError("send error", error.localizedDescription)
+                    stop(error: error)
+                    continuation.resume(throwing: error)
+                } else {
+                    continuation.resume(returning: Void())
+                }
+            }))
+        }
+    }
+    
+    private func sendMsg(_ msgData: Data) async throws {
+        let msgSizeData = withUnsafeBytes(of: msgData.count) {
+            Data($0)
+        }
+        try await sendChunk(msgSizeData)
+        try await sendChunk(msgData)
     }
 }
 
@@ -351,12 +428,13 @@ extension TnNetworkConnection: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data) {
-        Task {
-            try await tnDoCatchAsync(name: "send") {
-                try await self.sendAsync(data)
-            }
+    public func send(_ data: Data) async throws {
+        guard connection.state == .ready else {
+            return
         }
+
+//        try await self.sendAsyncOld(data)
+        try await self.sendMsg(data)
     }
 }
 
