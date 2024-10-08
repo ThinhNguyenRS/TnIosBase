@@ -12,8 +12,8 @@ public protocol TnNetworkDelegate {
 //    func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data)
 //    func tnNetwork(_ connection: TnNetworkConnection, sentData: Data)
     
-    func tnNetworkSent(_ connection: TnNetworkConnection)
-    func tnNetworkReceived(_ connection: TnNetworkConnection)
+    func tnNetworkSent(_ connection: TnNetworkConnection, count: Int)
+    func tnNetworkReceived(_ connection: TnNetworkConnection, count: Int)
     func tnNetworkReady(_ connection: TnNetworkConnection)
     func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?)
 }
@@ -23,8 +23,8 @@ public protocol TnNetworkDelegateServer {
     func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
     func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnectionServer, error: Error?)
     func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnectionServer)
-    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection)
-    func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection)
+    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
+    func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
 }
 
 public struct TnNetworkHostInfo: Codable {
@@ -135,18 +135,18 @@ extension TnNetworkServer: TnNetworkDelegate {
         delegate?.tnNetworkStop(self, connection: connectionServer, error: error)
     }
 
-    public func tnNetworkReceived(_ connection: TnNetworkConnection) {
+    public func tnNetworkReceived(_ connection: TnNetworkConnection, count: Int) {
         logDebug("received from", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetworkReceived(self, connection: connectionServer)
+        delegate?.tnNetworkReceived(self, connection: connectionServer, count: count)
     }
     
-    public func tnNetworkSent(_ connection: TnNetworkConnection) {
+    public func tnNetworkSent(_ connection: TnNetworkConnection, count: Int) {
         logDebug("sent to", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetworkSent(self, connection: connectionServer)
+        delegate?.tnNetworkSent(self, connection: connectionServer, count: count)
     }
 }
 
@@ -274,12 +274,17 @@ extension TnNetworkConnection {
                 $0.load(as: Int.self)
             }
             self.logDebug("received msgSize", msgSize)
-            guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
-                throw TnAppError.general(message: "Receive error: Message corrupted")
+            if msgSize < 0 || msgSize > transportingInfo.MTU {
+                self.stop()
+                throw TnAppError.general(message: "Receive error: Something wrong")
+            } else {
+                guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
+                    self.stop()
+                    throw TnAppError.general(message: "Receive error: Message corrupted")
+                }
+                self.logDebug("received msg", msgData.count)
+                return msgData
             }
-
-            self.logDebug("received msg", msgData.count)
-            return msgData
         }
         
         return nil
@@ -296,7 +301,7 @@ extension TnNetworkConnection {
                         msgQueue.append(msgData)
 
                         // signal
-                        delegate?.tnNetworkReceived(self)
+                        delegate?.tnNetworkReceived(self, count: msgData.count)
                     }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
@@ -339,7 +344,7 @@ extension TnNetworkConnection {
         }
         try await sendChunk(msgSizeData)
         try await sendChunk(msgData)
-        delegate?.tnNetworkSent(self)
+        delegate?.tnNetworkSent(self, count: msgData.count)
         
         try await Task.sleep(nanoseconds: 1_000_000)
     }
