@@ -382,7 +382,9 @@ extension TnNetworkConnection {
     
     private func startReceiveMsg() {
         Task {
+            logDebug("startReceiveMsg start")
             while connection.state == .ready {
+                logDebug("startReceiveMsg ...")
                 if let msgData = try await tnDoCatchAsync(name: "receiveMsg", action: {
                     try await self.receiveMsg()
                 }) {
@@ -391,6 +393,7 @@ extension TnNetworkConnection {
                 }
 //                try await Task.sleep(nanoseconds: 10_1000_1000)
             }
+            logDebug("startReceiveMsg done", connection.state)
         }
     }
 }
