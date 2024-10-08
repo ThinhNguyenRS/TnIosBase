@@ -43,7 +43,7 @@ public class TnNetworkServer: TnLoggable {
     private let listener: NWListener
     private var connectionsByID: [Int: TnNetworkConnectionServer] = [:]
     private let queue: DispatchQueue
-    private let delegate: TnNetworkDelegateServer?
+    public var delegate: TnNetworkDelegateServer? = nil
     private let transportingInfo: TnNetworkTransportingInfo
     
     public init(hostInfo: TnNetworkHostInfo, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, transportingInfo: TnNetworkTransportingInfo) {
