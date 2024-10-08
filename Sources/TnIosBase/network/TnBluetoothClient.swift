@@ -112,10 +112,12 @@ public class TnBluetoothClient: NSObject, ObservableObject {
 
     private static var sendingWorkerID = 0
     private var sendingWorkers: [SendingWorker] = []
+    private let encoder: TnEncoder
 
-    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothClientDelegate? = nil) {
+    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothClientDelegate? = nil, encoder: TnEncoder) {
         self.info = info
         self.delegate = delegate
+        self.encoder = encoder
     }
 }
 
@@ -440,7 +442,7 @@ extension TnBluetoothClient {
     }
     
     public func send(object: TnMessageProtocol, peripheralIDs: [String]? = nil) throws {
-        self.send(msg: try object.toMessage(), peripheralIDs: peripheralIDs)
+        self.send(msg: try object.toMessage(encoder: encoder), peripheralIDs: peripheralIDs)
     }
 }
 

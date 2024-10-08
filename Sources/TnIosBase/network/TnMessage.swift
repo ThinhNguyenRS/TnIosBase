@@ -13,8 +13,8 @@ public protocol TnMessageProtocol: Codable {
 }
 
 extension TnMessageProtocol {
-    public func toMessage() throws -> TnMessage {
-        try TnMessage(object: self)
+    public func toMessage(encoder: TnEncoder) throws -> TnMessage {
+        try TnMessage(object: self, encoder: encoder)
     }
 }
 
@@ -28,16 +28,11 @@ public struct TnMessage {
         self.data = data
     }
     
-    public init<T: TnMessageProtocol>(object: T) throws {
+    public init<T: TnMessageProtocol>(object: T, encoder: TnEncoder) throws {
         do {
             self.data = Data()
             self.data.append(object.typeCode)
             
-//            let encoder = BinaryEncoder()
-//            let encodedData = try encoder.encode(object)
-//            self.data.append(encodedData)
-            
-            let encoder = JSONEncoder()
             let encodedData = try encoder.encode(object)
             self.data.append(encodedData)
         } catch {
@@ -46,13 +41,9 @@ public struct TnMessage {
         }
     }
     
-    public func toObject<T: Codable>() -> T? {
-        let encodedData = data.suffix(from: 1)
+    public func toObject<T: Codable>(decoder: TnDecoder) -> T? {
+        let encodedData = data[1...]
         do {
-//            let decoder = BinaryDecoder()
-//            return try decoder.decode(T.self, from: encodedData) as T
-
-            let decoder = JSONDecoder()
             return try decoder.decode(T.self, from: encodedData) as T
         } catch {
             TnLogger.error("TnMessage", "Cannot decode to", T.self, error.localizedDescription)
@@ -60,3 +51,4 @@ public struct TnMessage {
         return nil
     }
 }
+
