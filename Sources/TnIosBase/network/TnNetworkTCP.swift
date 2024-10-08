@@ -26,15 +26,19 @@ public protocol TnNetworkDelegateServer {
     func tnNetwork(_ server: TnNetworkServer, connection: TnNetworkConnection, sentData: Data)
 }
 
-public protocol TnNetwork {
-    var host: String {get}
-    var port: UInt16 {get}
+public struct TnNetworkHostInfo: Codable {
+    public let host: String
+    public let port: UInt16
+    
+    init(host: String, port: UInt16) {
+        self.host = host
+        self.port = port
+    }
 }
 
 // MARK: TnNetworkServer
-public class TnNetworkServer: TnNetwork, TnLoggable {
-    public let host: String
-    public let port: UInt16
+public class TnNetworkServer: TnLoggable {
+    public let hostInfo: TnNetworkHostInfo
     
     private let listener: NWListener
     private var connectionsByID: [Int: TnNetworkConnectionServer] = [:]
@@ -42,15 +46,14 @@ public class TnNetworkServer: TnNetwork, TnLoggable {
     private let delegate: TnNetworkDelegateServer?
     private let transportingInfo: TnNetworkTransportingInfo
     
-    public init(host: String, port: UInt16, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, transportingInfo: TnNetworkTransportingInfo) {
-        self.host = host
-        self.port = port
+    public init(hostInfo: TnNetworkHostInfo, queue: DispatchQueue, delegate: TnNetworkDelegateServer?, transportingInfo: TnNetworkTransportingInfo) {
+        self.hostInfo = hostInfo
         self.queue = queue
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
-        listener = try! NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: port)!)
-        listener.parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!)
+        listener = try! NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: hostInfo.port)!)
+        listener.parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!)
     }
     
     deinit {
@@ -123,14 +126,14 @@ public class TnNetworkServer: TnNetwork, TnLoggable {
 
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
-        logDebug("accepted", connection.host)
+        logDebug("accepted", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         delegate?.tnNetwork(self, accepted: connectionServer)
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
-        logDebug("disconnected of", connection.host)
+        logDebug("disconnected of", connection.hostInfo.host)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         self.connectionsByID.removeValue(forKey: connectionServer.id)
@@ -138,14 +141,14 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 
     public func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data) {
-        logDebug("received from", connection.host, receivedData.count)
+        logDebug("received from", connection.hostInfo.host, receivedData.count)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         delegate?.tnNetwork(self, connection: connectionServer, receivedData: receivedData)
     }
     
     public func tnNetwork(_ connection: TnNetworkConnection, sentData: Data) {
-        logDebug("sent to", connection.host, sentData.count)
+        logDebug("sent to", connection.hostInfo.host, sentData.count)
 
         let connectionServer = connection as! TnNetworkConnectionServer
         delegate?.tnNetwork(self, connection: connectionServer, sentData: sentData)
@@ -177,10 +180,9 @@ public struct TnNetworkReceiveData {
 }
 
 // MARK: TnNetworkConnection
-public class TnNetworkConnection: TnNetwork, TnLoggable {
-    public let host: String
-    public let port: UInt16
-    
+public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
+    public let hostInfo: TnNetworkHostInfo
+
     private let delegate: TnNetworkDelegate?
     private let connection: NWConnection
     private let queue: DispatchQueue
@@ -190,19 +192,16 @@ public class TnNetworkConnection: TnNetwork, TnLoggable {
         
     public init(nwConnection: NWConnection, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.connection = nwConnection
-        let hp = nwConnection.endpoint.getHostAndPort()
-        self.host = hp.host
-        self.port = hp.port
+        self.hostInfo = nwConnection.endpoint.getHostInfo()
         self.queue = queue ?? DispatchQueue(label: "\(Self.Type.self).queue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
-        logDebug("inited incoming", host)
+        logDebug("inited incoming", hostInfo.host)
     }
     
     public init(host: String, port: UInt16, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
-        self.host = host
-        self.port = port
+        self.hostInfo = .init(host: host, port: port)
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
         self.queue = queue ?? DispatchQueue(label: "\(Self.Type.self).queue")
         self.delegate = delegate
@@ -374,12 +373,12 @@ public class TnNetworkConnectionServer: TnNetworkConnection {
 
 // MARK: NWEndpoint
 extension NWEndpoint {
-    public func getHostAndPort() -> (host: String, port: UInt16) {
+    public func getHostInfo() -> TnNetworkHostInfo {
         switch self {
         case .hostPort(let host, let port):
-            return (host: "\(host)", port: port.rawValue)
+            return TnNetworkHostInfo(host: "\(host)", port: port.rawValue)
         default:
-            return (host: "", port: 0)
+            return TnNetworkHostInfo(host: "", port: 0)
         }
     }
 }
