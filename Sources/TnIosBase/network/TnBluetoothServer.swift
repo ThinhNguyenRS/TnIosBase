@@ -120,9 +120,8 @@ public class TnBluetoothServer: NSObject {
     public var delegate: TnBluetoothServerDelegate? = nil
 
     private var dataQueue: [String: Data] = [:]
-    private let encoder: TnEncoder
 
-    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothServerDelegate? = nil, encoder: TnEncoder) {
+    public init(info: TnNetworkServiceInfo, delegate: TnBluetoothServerDelegate? = nil) {
         self.info = info
         self.delegate = delegate
         self.transferCharacteristic = CBMutableCharacteristic(
@@ -131,7 +130,6 @@ public class TnBluetoothServer: NSObject {
             value: nil,
             permissions: [.readable, .writeable]
         )
-        self.encoder = encoder
     }
     
     deinit {
@@ -303,7 +301,7 @@ extension TnBluetoothServer {
     }
     
     public func send(object: TnMessageProtocol, centralIDs: [String]? = nil) throws {
-        self.send(msg: try object.toMessage(encoder: encoder), centralIDs: centralIDs)
+        self.send(msg: try object.toMessage(encoder: info.encoder), centralIDs: centralIDs)
     }
 }
 
