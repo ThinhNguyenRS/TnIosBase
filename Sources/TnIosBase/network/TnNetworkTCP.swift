@@ -293,11 +293,11 @@ extension TnNetworkConnection {
             logDebug("startReceiveMsg start")
             while connection.state == .ready {
                 logDebug("startReceiveMsg ...")
-                if let msgData = try await tnDoCatchAsync(name: "receiveMsg", action: {
-                    try await self.receiveMsg()
-                }) {
-                    // signal
-                    delegate?.tnNetwork(self, receivedData: msgData)
+                if let msgData = try await self.receiveMsg() {
+                    Task {
+                        // signal
+                        delegate?.tnNetwork(self, receivedData: msgData)
+                    }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
