@@ -445,7 +445,7 @@ extension TnBluetoothClient: TnTransportableProtocol {
         transportingInfo.decoder
     }
     
-    public func send(_ data: Data) {
+    public func send(_ data: Data) async throws {
         self.send(data: data, peripheralIDs: nil)
     }
 }

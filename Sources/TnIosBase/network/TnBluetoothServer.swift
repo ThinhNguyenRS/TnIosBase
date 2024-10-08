@@ -52,7 +52,7 @@ public class TnBluetoothServer: NSObject {
             self.send()
         }
 
-        func send() {
+         func send() {
             if status == .finished {
                 return
             }
@@ -203,7 +203,7 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
             
             var data = dataQueue[request.central.identifier.uuidString] ?? .init()
             if data.isEmpty {
-                logDebug("receiving", request.central.identifier.uuidString)
+                logDebug("receiving")
             }
             let receiveMessage = requestValue.count == transportingInfo.EOM.count && requestValue == transportingInfo.EOM
             if !receiveMessage {
@@ -306,7 +306,7 @@ extension TnBluetoothServer: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data) {
+    public func send(_ data: Data) async throws {
         self.send(data: data, centralIDs: nil)
     }
 }
