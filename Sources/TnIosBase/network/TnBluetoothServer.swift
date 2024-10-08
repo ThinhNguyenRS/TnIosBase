@@ -107,7 +107,7 @@ public class TnBluetoothServer: NSObject {
         }
     }
     
-    private let info: TnNetworkServiceInfo
+    public let info: TnNetworkServiceInfo
     private var status: Status = .none
     
     private var peripheralManager: CBPeripheralManager?

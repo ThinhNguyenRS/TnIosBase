@@ -97,7 +97,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
         }
     }
 
-    private let info: TnNetworkServiceInfo
+    public let info: TnNetworkServiceInfo
     private var centralManager: CBCentralManager!
     public private(set) var discoveredPeripherals: [CBPeripheral] = []
     public private(set) var connectedPeripherals: [CBPeripheral] = []
