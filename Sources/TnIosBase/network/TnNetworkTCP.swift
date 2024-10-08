@@ -292,7 +292,7 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
     
     private func startReceiveAsync() {
         Task {
-            let sleepNanos: UInt64 = 10*1000*1000
+            let sleepNanos: UInt64 = 10_1000_1000
             while connection.state == .ready {
                 if let parts = try await receiveAsync() {
                     for part in parts {
