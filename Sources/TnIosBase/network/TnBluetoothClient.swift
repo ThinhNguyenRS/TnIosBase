@@ -61,7 +61,7 @@ public class TnBluetoothClient: NSObject, ObservableObject {
             peripheral.writeValue(outer.transportingInfo.EOM, for: outer.transferCharacteristic!, type: .withoutResponse)
             status = .finished
 
-            logDebug("sent", peripheral.name!, data.count)
+            logDebug("sent", data.count)
             outer.delegate?.tnBluetoothClient(ble: outer, sentID: peripheral.identifier.uuidString, sentData: data)
 
             outer.sendingWorkers.remove(of: self)
@@ -292,7 +292,7 @@ extension TnBluetoothClient: CBPeripheralDelegate {
         
         if receiveMessage {
             // signal
-            logDebug("received", peripheral.identifier.uuidString, data.count)
+            logDebug("received", data.count)
             delegate?.tnBluetoothClient(ble: self, receivedID: peripheral.identifier.uuidString, receivedData: data)
             data.removeAll()
         }

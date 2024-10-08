@@ -213,7 +213,7 @@ extension TnBluetoothServer: CBPeripheralManagerDelegate {
             }
 
             if receiveMessage {
-                logDebug("received", request.central.identifier.uuidString, data.count)
+                logDebug("received", data.count)
                 delegate?.tnBluetoothServer(ble: self, receivedID: request.central.identifier.uuidString, receivedData: data)
                 data.removeAll()
             }

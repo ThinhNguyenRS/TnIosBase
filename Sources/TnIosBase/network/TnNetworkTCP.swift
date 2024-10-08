@@ -355,6 +355,7 @@ extension TnNetworkConnection {
                     self.stop(error: nil)
                     continuation.resume(throwing: TnAppError.general(message: "Receive error: The connection is closed"))
                 } else {
+                    self.logDebug("receiving", content?.count)
                     continuation.resume(
                         returning: content
                     )
@@ -368,11 +369,11 @@ extension TnNetworkConnection {
             let msgSize = msgSizeData.withUnsafeBytes {
                 $0.load(as: Int.self)
             }
-            let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize)
-            if msgData == nil || msgData!.count != msgSize {
+            guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
                 throw TnAppError.general(message: "Receive error: Message corrupted")
             }
-            
+
+            self.logDebug("received", msgData.count)
             return msgData
         }
         
@@ -398,12 +399,14 @@ extension TnNetworkConnection {
 extension TnNetworkConnection {
     private func sendChunk(_ data: Data) async throws {
         return try await withCheckedThrowingContinuation { continuation in
+            logDebug("sending", data.count)
             self.connection.send(content: data, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
                     continuation.resume(throwing: error)
                 } else {
+                    logDebug("sent", data.count)
                     continuation.resume(returning: Void())
                 }
             }))
