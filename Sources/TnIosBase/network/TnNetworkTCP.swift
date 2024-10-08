@@ -200,9 +200,9 @@ public class TnNetworkConnection:/* TnNetwork, */TnLoggable {
         logDebug("inited incoming", hostInfo.host)
     }
     
-    public init(host: String, port: UInt16, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
-        self.hostInfo = .init(host: host, port: port)
-        self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port)!, using: .tcp)
+    public init(hostInfo: TnNetworkHostInfo, queue: DispatchQueue?, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
+        self.hostInfo = hostInfo
+        self.connection = NWConnection(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!, using: .tcp)
         self.queue = queue ?? DispatchQueue(label: "\(Self.Type.self).queue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
