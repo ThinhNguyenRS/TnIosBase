@@ -13,7 +13,6 @@ public protocol TnNetworkDelegate {
 //    func tnNetwork(_ connection: TnNetworkConnection, sentData: Data)
     
     func tnNetworkSent(_ connection: TnNetworkConnection, count: Int)
-    func tnNetworkReceived(_ connection: TnNetworkConnection, count: Int)
     func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data)
     
     func tnNetworkReady(_ connection: TnNetworkConnection)
@@ -23,11 +22,10 @@ public protocol TnNetworkDelegate {
 public protocol TnNetworkDelegateServer {
     func tnNetworkReady(_ server: TnNetworkServer)
     func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
-    func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnectionServer, error: Error?)
-    func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnectionServer)
+    func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnection, error: Error?)
+    func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnection)
     
     func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
-    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
     func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, data: Data)
 }
 
@@ -127,8 +125,7 @@ extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
         logDebug("accepted", connection.hostInfo.host)
 
-        let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetworkAccepted(self, connection: connectionServer)
+        delegate?.tnNetworkAccepted(self, connection: connection)
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
@@ -136,28 +133,20 @@ extension TnNetworkServer: TnNetworkDelegate {
 
         let connectionServer = connection as! TnNetworkConnectionServer
         self.connectionsByID.removeValue(forKey: connectionServer.id)
-        delegate?.tnNetworkStop(self, connection: connectionServer, error: error)
+        
+        delegate?.tnNetworkStop(self, connection: connection, error: error)
     }
 
-    public func tnNetworkReceived(_ connection: TnNetworkConnection, count: Int) {
-        logDebug("received from", connection.hostInfo.host)
-
-        let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetworkReceived(self, connection: connectionServer, count: count)
-    }
-    
     public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
         logDebug("received from", connection.hostInfo.host)
 
-        let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetworkReceived(self, connection: connectionServer, data: data)
+        delegate?.tnNetworkReceived(self, connection: connection, data: data)
     }
 
     public func tnNetworkSent(_ connection: TnNetworkConnection, count: Int) {
         logDebug("sent to", connection.hostInfo.host)
 
-        let connectionServer = connection as! TnNetworkConnectionServer
-        delegate?.tnNetworkSent(self, connection: connectionServer, count: count)
+        delegate?.tnNetworkSent(self, connection: connection, count: count)
     }
 }
 
