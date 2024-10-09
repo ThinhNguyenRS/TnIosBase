@@ -185,20 +185,13 @@ public class TnNetworkConnection: TnLoggable {
     private let connection: NWConnection
     private let queue: DispatchQueue
     private let transportingInfo: TnNetworkTransportingInfo
-    
-    
     private let receiveQueueQueue: DispatchQueue
-    private var receiveQueue: [Data] = []
-        
-    private let sendQueueQueue: DispatchQueue
-    private var sendQueue: [Data] = []
 
     public init(nwConnection: NWConnection, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.connection = nwConnection
         self.hostInfo = nwConnection.endpoint.getHostInfo()
         self.queue = DispatchQueue(label: "\(Self.self).queue")
         self.receiveQueueQueue = DispatchQueue(label: "\(Self.self).receiveQueueQueue")
-        self.sendQueueQueue = DispatchQueue(label: "\(Self.self).sendQueueQueue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -210,7 +203,6 @@ public class TnNetworkConnection: TnLoggable {
         self.connection = NWConnection(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!, using: .tcp)
         self.queue = DispatchQueue(label: "\(Self.self).queue")
         self.receiveQueueQueue = DispatchQueue(label: "\(Self.self).receiveQueueQueue")
-        self.sendQueueQueue = DispatchQueue(label: "\(Self.self).sendQueueQueue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -316,27 +308,10 @@ extension TnNetworkConnection {
                     receiveQueueQueue.async { [self] in
                         delegate?.tnNetworkReceived(self, data: msgData)
                     }
-
-//                    // add to queue
-//                    receiveQueueQueue.async { [self] in
-//                        receiveQueue.append(msgData)
-//
-//                        // signal
-//                        delegate?.tnNetworkReceived(self, count: msgData.count)
-//                    }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
             logDebug("startReceiveMsg done", connection.state)
-        }
-    }
-    
-    public func processMsgQueue(action: @escaping (Data) -> Void) {
-        receiveQueueQueue.async { [self] in
-            while !receiveQueue.isEmpty {
-                let msgData = receiveQueue.removeFirst()
-                action(msgData)
-            }
         }
     }
 }
@@ -384,15 +359,7 @@ extension TnNetworkConnection: TnTransportableProtocol {
         guard connection.state == .ready else {
             return
         }
-        
         try await self.sendMsg(data)
-//        Task {
-//            sendQueue.append(data)
-//            while !sendQueue.isEmpty {
-//                let msgData = sendQueue.removeFirst()
-//                try await self.sendMsg(msgData)
-//            }
-//        }
     }
 }
 
