@@ -293,10 +293,11 @@ extension TnNetworkConnection {
             while connection.state == .ready {
                 logDebug("startReceiveMsg ...")
                 if let msgData = try await self.receiveMsg() {
-                    // signal in a separated queue
-                    receiveQueueQueue.async { [self] in
-                        delegate?.tnNetworkReceived(self, data: msgData)
-                    }
+                    delegate?.tnNetworkReceived(self, data: msgData)
+//                    // signal in a separated queue
+//                    receiveQueueQueue.async { [self] in
+//                        delegate?.tnNetworkReceived(self, data: msgData)
+//                    }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
