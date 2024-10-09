@@ -14,6 +14,8 @@ public protocol TnNetworkDelegate {
     
     func tnNetworkSent(_ connection: TnNetworkConnection, count: Int)
     func tnNetworkReceived(_ connection: TnNetworkConnection, count: Int)
+    func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data)
+    
     func tnNetworkReady(_ connection: TnNetworkConnection)
     func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?)
 }
@@ -23,8 +25,10 @@ public protocol TnNetworkDelegateServer {
     func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
     func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnectionServer, error: Error?)
     func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnectionServer)
-    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
+    
     func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
+    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
+    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, data: Data)
 }
 
 public struct TnNetworkHostInfo: Codable {
@@ -142,6 +146,13 @@ extension TnNetworkServer: TnNetworkDelegate {
         delegate?.tnNetworkReceived(self, connection: connectionServer, count: count)
     }
     
+    public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
+        logDebug("received from", connection.hostInfo.host)
+
+        let connectionServer = connection as! TnNetworkConnectionServer
+        delegate?.tnNetworkReceived(self, connection: connectionServer, data: data)
+    }
+
     public func tnNetworkSent(_ connection: TnNetworkConnection, count: Int) {
         logDebug("sent to", connection.hostInfo.host)
 
@@ -301,13 +312,18 @@ extension TnNetworkConnection {
             while connection.state == .ready {
                 logDebug("startReceiveMsg ...")
                 if let msgData = try await self.receiveMsg() {
-                    // add to queue
+                    // signal in a separated queue
                     receiveQueueQueue.async { [self] in
-                        receiveQueue.append(msgData)
-
-                        // signal
-                        delegate?.tnNetworkReceived(self, count: msgData.count)
+                        delegate?.tnNetworkReceived(self, data: msgData)
                     }
+
+//                    // add to queue
+//                    receiveQueueQueue.async { [self] in
+//                        receiveQueue.append(msgData)
+//
+//                        // signal
+//                        delegate?.tnNetworkReceived(self, count: msgData.count)
+//                    }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
