@@ -276,7 +276,7 @@ extension TnNetworkConnection {
     private func receiveMsg() async throws -> Data? {
         if let msgSizeData = try await receiveChunk(minSize: MemoryLayout<Int>.size, maxSize: MemoryLayout<Int>.size) {
             let msgSize = msgSizeData.withUnsafeBytes {
-                $0.load(as: Int.self)
+                $0.load(as: Int.self).bigEndian
             }
             self.logDebug("received msgSize", msgSize)
             if msgSize < 0 || msgSize > transportingInfo.MTU {
@@ -344,12 +344,14 @@ extension TnNetworkConnection {
     }
     
     private func sendMsg(_ msgData: Data) async throws {
-        let msgSizeData = withUnsafeBytes(of: msgData.count) {
-            Data($0)
-        }
-        try await sendChunk(msgSizeData)
-        try await sendChunk(msgData)
-        delegate?.tnNetworkSent(self, count: msgData.count)        
+        let msgSizeData = withUnsafeBytes(of: msgData.count.bigEndian) { Data($0) }
+        
+        var sendData = Data(capacity: msgData.count+msgData.count)
+        sendData.append(msgSizeData)
+        sendData.append(msgData)
+
+        try await sendChunk(sendData)
+        delegate?.tnNetworkSent(self, count: sendData.count)
     }
 }
 
@@ -367,13 +369,14 @@ extension TnNetworkConnection: TnTransportableProtocol {
             return
         }
         
-        Task {
-            sendQueue.append(data)
-            while !sendQueue.isEmpty {
-                let msgData = sendQueue.removeFirst()
-                try await self.sendMsg(msgData)
-            }
-        }
+        try await self.sendMsg(data)
+//        Task {
+//            sendQueue.append(data)
+//            while !sendQueue.isEmpty {
+//                let msgData = sendQueue.removeFirst()
+//                try await self.sendMsg(msgData)
+//            }
+//        }
     }
 }
 
