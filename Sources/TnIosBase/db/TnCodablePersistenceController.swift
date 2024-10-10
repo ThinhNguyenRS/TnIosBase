@@ -28,12 +28,18 @@ public actor TnCodablePersistenceController: TnLoggable {
         logDebug("inited")
     }
     
+//    var context: NSManagedObjectContext {
+//        container.viewContext
+//    }
+
+    lazy var context: NSManagedObjectContext = container.newBackgroundContext()
+
     func fetchItems(typeName: String) throws -> [TnCodableItem]? {
         let request = TnCodableItem.fetchRequest();
         request.predicate = .init(format: "typeName == %@", typeName)
         
         return try tnDoCatch(name: "fetchItems") { [self] in
-            let results = try container.viewContext.fetch(request)
+            let results = try context.fetch(request)
             return results
         }
     }
@@ -63,12 +69,12 @@ public actor TnCodablePersistenceController: TnLoggable {
     
     public func save() throws {
         try tnDoCatch(name: "save") {
-            try self.container.viewContext.save()
+            try self.context.save()
         }
     }
 
     public func add<T>(object: T) throws -> NSManagedObjectID where T: Codable {
-        let item = TnCodableItem(context: container.viewContext)
+        let item = TnCodableItem(context: context)
         item.typeName = "\(T.self)"
         item.jsonData = try object.toJsonData()
         item.createdAt = .now
@@ -78,15 +84,16 @@ public actor TnCodablePersistenceController: TnLoggable {
     }
 
     public func update<T>(objectID: NSManagedObjectID, object: T) throws where T: Codable {
-        let item = container.viewContext.object(with: objectID) as! TnCodableItem
-        item.jsonData = try object.toJsonData()
-        item.updatedAt = .now
-        try self.save()
+        if let item = context.object(with: objectID) as? TnCodableItem {
+            item.jsonData = try object.toJsonData()
+            item.updatedAt = .now
+            try self.save()
+        }
     }
     
     public func delete(objectID: NSManagedObjectID) throws {
-        let item = container.viewContext.object(with: objectID)
-        container.viewContext.delete(item)
+        let item = context.object(with: objectID)
+        context.delete(item)
         try self.save()
     }
 
