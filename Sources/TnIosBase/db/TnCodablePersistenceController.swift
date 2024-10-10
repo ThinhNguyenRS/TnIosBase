@@ -8,7 +8,7 @@
 import Foundation
 import CoreData
 
-public actor TnCodablePersistenceController: TnLoggable {
+public class /*actor*/ TnCodablePersistenceController: TnLoggable {
     public static let shared = TnCodablePersistenceController()
     
     private lazy var container: NSPersistentContainer = {
