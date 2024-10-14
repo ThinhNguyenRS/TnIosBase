@@ -6,8 +6,8 @@
 //
 
 import Foundation
-//import BinaryCodable
 
+// MARK: TnMessageProtocol
 public protocol TnMessageProtocol: Codable {
     var typeCode: UInt8 { get }
 }
@@ -18,6 +18,7 @@ extension TnMessageProtocol {
     }
 }
 
+// MARK: TnMessage
 public struct TnMessage {
     private(set) var data: Data
     public var typeCode: UInt8 {
@@ -52,3 +53,12 @@ public struct TnMessage {
     }
 }
 
+// MARK: TnMessageIdentifier
+public struct TnMessageIdentifier: TnMessageProtocol {
+    public var typeCode: UInt8 { 0 }
+    public let name: String
+    
+    public init(name: String) {
+        self.name = name
+    }
+}
