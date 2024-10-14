@@ -268,7 +268,7 @@ extension TnNetworkConnection {
     }
     
     private func receiveMsg() async throws -> Data? {
-        if let msgSizeData = try await receiveChunk(minSize: MemoryLayout<TSize>.size, maxSize: MemoryLayout<TSize>.size) {
+        if let msgSizeData = try await receiveChunk(minSize: TSize.size, maxSize: TSize.size) {
             let msgSize: TSize = msgSizeData.toNumber()
             self.logDebug("received msgSize", msgSize)
             

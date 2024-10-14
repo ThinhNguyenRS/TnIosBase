@@ -62,7 +62,12 @@ extension FixedWidthInteger {
     /// number to Data
     public func toData() -> Data {
         withUnsafeBytes(of: self.bigEndian) { Data($0) }
-    }    
+    }
+    
+    /// data size of this type
+    public static var size: Int {
+        MemoryLayout<Self>.size
+    }
 }
 
 // MARK: Data to number
