@@ -188,7 +188,10 @@ public class TnNetworkConnection: TnLoggable {
         }
     }
     
+    private let isClient: Bool
+    
     public init(nwConnection: NWConnection, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
+        self.isClient = false
         self.connection = nwConnection
         self.hostInfo = nwConnection.endpoint.getHostInfo()
         self.queue = DispatchQueue(label: "\(Self.self).queue")
@@ -200,6 +203,7 @@ public class TnNetworkConnection: TnLoggable {
     }
     
     public init(hostInfo: TnNetworkHostInfo, name: String, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
+        self.isClient = true
         self.hostInfo = hostInfo
         self.name = name
         self.connection = NWConnection(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!, using: .tcp)
@@ -215,7 +219,6 @@ public class TnNetworkConnection: TnLoggable {
         self.stop()
     }
     
-    
     private func stop(error: Error?) {
         connection.stateUpdateHandler = nil
         connection.cancel()
@@ -228,7 +231,12 @@ public class TnNetworkConnection: TnLoggable {
         switch state {
         case .ready:
             logDebug("ready")
-//            startReceiveAsync()
+            // send its name to server
+            if isClient {
+                Task.detached { [self] in
+                    try await send(object: TnMessageIdentifier(name: name))
+                }
+            }
             startReceiveMsg()
             delegate?.tnNetworkReady(self)
         case .waiting(let error):
@@ -239,7 +247,6 @@ public class TnNetworkConnection: TnLoggable {
             stop(error: error)
         case .cancelled:
             logDebug("cancelled")
-//            stop(error: nil)
         default:
             break
         }
