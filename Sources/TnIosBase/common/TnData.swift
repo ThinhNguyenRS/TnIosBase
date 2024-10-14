@@ -7,19 +7,7 @@
 
 import Foundation
 
-extension Data {
-    func toString() -> String {
-        let dataString = String(decoding: self, as: UTF8.self)
-        return dataString
-    }
-    
-    func tnToObjectFromJSON<T: Decodable>(_ type: T.Type) throws -> T {
-        let decoder = JSONDecoder()
-        let obj = try decoder.decode(type, from: self)
-        return obj
-    }
-}
-
+// MARK: NSData toString
 extension NSData {
     func toString() -> String {
         let dataString = String(decoding: self, as: UTF8.self)
@@ -27,6 +15,25 @@ extension NSData {
     }
 }
 
+// MARK: Data toString
+extension Data {
+    func toString() -> String {
+        let dataString = String(decoding: self, as: UTF8.self)
+        return dataString
+    }
+}
+
+// MARK: Data tnToObjectFromJSON
+extension Data {
+    func tnToObjectFromJSON<T: Decodable>(_ type: T.Type) throws -> T {
+        let decoder = JSONDecoder()
+        let obj = try decoder.decode(type, from: self)
+        return obj
+    }
+}
+
+
+// MARK: Data split
 extension Data {
     func split(separator: Data) -> [Data] {
         var chunks: [Data] = []
@@ -50,3 +57,20 @@ extension Data {
     }
 }
 
+// MARK: FixedWidthInteger number to Data
+extension FixedWidthInteger {
+    /// number to Data
+    public func toData() -> Data {
+        withUnsafeBytes(of: self.bigEndian) { Data($0) }
+    }    
+}
+
+// MARK: Data to number
+extension Data {
+    /// Data to number
+    public func toNumber<T: FixedWidthInteger>() -> T {
+        return self.withUnsafeBytes {
+            $0.load(as: T.self).bigEndian
+        }
+    }
+}

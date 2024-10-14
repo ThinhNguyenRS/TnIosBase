@@ -168,6 +168,8 @@ extension TnNetworkServer: TnTransportableProtocol {
 
 // MARK: TnNetworkConnection
 public class TnNetworkConnection: TnLoggable {
+    typealias TSize = UInt32
+    
     public let hostInfo: TnNetworkHostInfo
 
     public var delegate: TnNetworkDelegate? = nil
@@ -266,16 +268,15 @@ extension TnNetworkConnection {
     }
     
     private func receiveMsg() async throws -> Data? {
-        if let msgSizeData = try await receiveChunk(minSize: MemoryLayout<Int>.size, maxSize: MemoryLayout<Int>.size) {
-            let msgSize = msgSizeData.withUnsafeBytes {
-                $0.load(as: Int.self).bigEndian
-            }
+        if let msgSizeData = try await receiveChunk(minSize: MemoryLayout<TSize>.size, maxSize: MemoryLayout<TSize>.size) {
+            let msgSize: TSize = msgSizeData.toNumber()
             self.logDebug("received msgSize", msgSize)
+            
             if msgSize < 0 || msgSize > transportingInfo.MTU {
                 self.stop()
                 throw TnAppError.general(message: "Receive error: Something wrong")
             } else {
-                guard let msgData = try await receiveChunk(minSize: msgSize, maxSize: msgSize), msgData.count == msgSize else {
+                guard let msgData = try await receiveChunk(minSize: Int(msgSize), maxSize: Int(msgSize)), msgData.count == msgSize else {
                     self.stop()
                     throw TnAppError.general(message: "Receive error: Message corrupted")
                 }
@@ -294,10 +295,6 @@ extension TnNetworkConnection {
                 logDebug("startReceiveMsg ...")
                 if let msgData = try await self.receiveMsg() {
                     delegate?.tnNetworkReceived(self, data: msgData)
-//                    // signal in a separated queue
-//                    receiveQueueQueue.async { [self] in
-//                        delegate?.tnNetworkReceived(self, data: msgData)
-//                    }
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
@@ -325,9 +322,9 @@ extension TnNetworkConnection {
     }
     
     private func sendMsg(_ msgData: Data) async throws {
-        let msgSizeData = withUnsafeBytes(of: msgData.count.bigEndian) { Data($0) }
+        let msgSizeData = TSize(msgData.count).toData()
         
-        var sendData = Data(capacity: msgData.count+msgData.count)
+        var sendData = Data(capacity: msgSizeData.count + msgData.count)
         sendData.append(msgSizeData)
         sendData.append(msgData)
 
