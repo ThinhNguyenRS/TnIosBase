@@ -55,10 +55,20 @@ public struct TnMessage {
 
 // MARK: TnMessageIdentifier
 public struct TnMessageIdentifier: TnMessageProtocol {
-    public var typeCode: UInt8 { 0 }
+    public static let typeCode: UInt8 = 0
+    
+    public var typeCode: UInt8 { Self.typeCode }
     public let name: String
     
     public init(name: String) {
         self.name = name
+    }
+    
+    public static func from(data: Data, decoder: TnDecoder) -> Self? {
+        let msg = TnMessage(data: data)
+        if msg.typeCode == Self.typeCode {
+            return msg.toObject(decoder: decoder)
+        }
+        return nil
     }
 }
