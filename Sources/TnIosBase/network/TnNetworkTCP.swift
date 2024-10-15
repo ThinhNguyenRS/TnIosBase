@@ -248,7 +248,7 @@ public class TnNetworkConnection: TnLoggable {
             // send its name to server
             if isClient {
                 Task.detached { [self] in
-                    try await send(object: TnMessageSystem.toMessageIndentifier(name: name))
+                    try await send(object: TnMessageSystem.toMessageIndentifier(name: name), to: nil)
                 }
             }
             startReceiveMsg()
