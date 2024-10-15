@@ -119,13 +119,6 @@ extension TnNetworkServer: TnNetworkDelegate {
         if connection.name.isEmpty {
             if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
                 connection.setName(msg.value)
-//                if var connectionIdx = connections.firstIndex(where: { $0 == connection}) {
-//                    logDebug("receive name", msg.value)
-//                    connection.setName(msg.value)
-//                    connections[connectionIdx] = connection
-//                    
-//                }
-                logDebug("connection names", connections.map { $0.name })
             }
         }
         delegate?.tnNetworkReceived(self, connection: connection, data: data)
