@@ -108,8 +108,10 @@ extension TnNetworkServer: TnNetworkDelegate {
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
         logDebug("disconnected of", connection.hostInfo.host)
-        self.connections.removeAll(where: { c in c.name == connection.name})
-        delegate?.tnNetworkStop(self, connection: connection, error: error)
+        if !self.connections.isEmpty {
+            self.connections.removeAll(where: { c in c.name == connection.name})
+            delegate?.tnNetworkStop(self, connection: connection, error: error)
+        }
     }
 
     public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
