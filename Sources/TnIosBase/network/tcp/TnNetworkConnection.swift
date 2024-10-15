@@ -21,7 +21,7 @@ public class TnNetworkConnection: TnLoggable {
     
     public private(set) var name: String = ""
     public func setName(_ name: String) {
-        if name.isEmpty {
+        if self.name.isEmpty {
             self.name = name
         }
     }
