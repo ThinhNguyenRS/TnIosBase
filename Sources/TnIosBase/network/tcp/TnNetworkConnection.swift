@@ -68,8 +68,6 @@ extension TnNetworkConnection: Equatable {
 // MARK: handle state
 extension TnNetworkConnection {
     private func onStateChanged(to state: NWConnection.State) {
-        logDebug("state changed", state)
-        
         switch state {
         case .ready:
             logDebug("ready")
@@ -90,6 +88,7 @@ extension TnNetworkConnection {
             stop(error: error)
         case .cancelled:
             logDebug("cancelled")
+            stop(error: nil)
         default:
             break
         }
@@ -104,6 +103,7 @@ extension TnNetworkConnection {
 //            connection.cancel()
 //            delegate?.tnNetworkStop(self, error: error)
 //        }
+        delegate?.tnNetworkStop(self, error: error)
     }
     
     public func start() {
