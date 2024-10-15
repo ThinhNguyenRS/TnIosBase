@@ -140,8 +140,8 @@ extension TnNetworkServer: TnNetworkDelegate {
         
         // check identifier msg
         if connection.name.isEmpty {
-            if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder), let name = msg.value {
-                connection.setName(name)
+            if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
+                connection.setName(msg.value)
             }
         }
         delegate?.tnNetworkReceived(self, connection: connection, data: data)
