@@ -16,12 +16,12 @@ public protocol TnTransportableProtocol: TnLoggable {
 }
 
 extension TnTransportableProtocol {
-    public func send(msg: TnMessage, to: [String]? = nil) async throws {
+    public func send(msg: TnMessageData, to: [String]? = nil) async throws {
         try await self.send(msg.data, to: to)
     }
     
-    public func send(object: TnMessageProtocol, to: [String]? = nil) async throws {
-        try await self.send(msg: object.toMessage(encoder: encoder), to: to)
+    public func send<TMessage: TnMessageObject>(object: TMessage, to: [String]? = nil) async throws {
+        try await self.send(msg: object.toMessageData(encoder: encoder), to: to)
     }
 }
 
