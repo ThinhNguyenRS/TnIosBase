@@ -24,7 +24,7 @@ extension TnTransportableProtocol {
         try await self.send(msg: object.toMessageData(encoder: encoder), to: to)
     }
     
-    public func send<T: Codable>(typeCode: UInt8, value: T, to: [String]? = nil) async throws {
+    public func send<T: Codable>(_ typeCode: UInt8, _ value: T, to: [String]? = nil) async throws {
         let msgValue = TnMessageValue(typeCode, value)
         try await self.send(object: msgValue, to: to)
     }
