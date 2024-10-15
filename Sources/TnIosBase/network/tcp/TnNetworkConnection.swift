@@ -1,189 +1,12 @@
 //
-//  TnNetworkTCP.swift
-//  tCamera
+//  TnNetworkConnection.swift
+//  TnIosBase
 //
-//  Created by Thinh Nguyen on 9/4/24.
+//  Created by Thinh Nguyen on 10/15/24.
 //
 
 import Foundation
 import Network
-
-public protocol TnNetworkDelegate {
-//    func tnNetwork(_ connection: TnNetworkConnection, receivedData: Data)
-//    func tnNetwork(_ connection: TnNetworkConnection, sentData: Data)
-    
-    func tnNetworkSent(_ connection: TnNetworkConnection, count: Int)
-    func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data)
-    
-    func tnNetworkReady(_ connection: TnNetworkConnection)
-    func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?)
-}
-
-public protocol TnNetworkDelegateServer {
-    func tnNetworkReady(_ server: TnNetworkServer)
-    func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
-    func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnection, error: Error?)
-    func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnection)
-    
-    func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
-    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, data: Data)
-}
-
-public struct TnNetworkHostInfo: Codable {
-    public let host: String
-    public let port: UInt16
-    
-    public init(host: String, port: UInt16) {
-        self.host = host
-        self.port = port
-    }
-}
-
-// MARK: TnNetworkServer
-public class TnNetworkServer: TnLoggable {
-    public let hostInfo: TnNetworkHostInfo
-    
-    private let listener: NWListener
-    private var connections: [TnNetworkConnection] = []
-    private let queue: DispatchQueue
-    public var delegate: TnNetworkDelegateServer? = nil
-    private let transportingInfo: TnNetworkTransportingInfo
-    
-    public init(hostInfo: TnNetworkHostInfo, delegate: TnNetworkDelegateServer?, transportingInfo: TnNetworkTransportingInfo) {
-        self.hostInfo = hostInfo
-        self.queue = DispatchQueue(label: "\(Self.self).queue")
-        self.delegate = delegate
-        self.transportingInfo = transportingInfo
-        
-        listener = try! NWListener(using: .tcp, on: NWEndpoint.Port(rawValue: hostInfo.port)!)
-        listener.parameters.requiredLocalEndpoint = NWEndpoint.hostPort(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!)
-    }
-    
-    deinit {
-        self.stop()
-    }
-    
-    private func stateDidChange(to newState: NWListener.State) {
-        switch newState {
-        case .ready:
-            logDebug("ready")
-            delegate?.tnNetworkReady(self)
-            
-        case .waiting(let error):
-            logDebug("waiting", error)
-            delegate?.tnNetworkStop(self, error: error)
-        case .failed(let error):
-            logDebug("failed", error)
-            delegate?.tnNetworkStop(self, error: error)
-        case .cancelled:
-            logDebug("cancelled")
-            delegate?.tnNetworkStop(self, error: nil)
-        default:
-            break
-        }
-    }
-    
-    private func didAccept(nwConnection: NWConnection) {
-        logDebug("accepting")
-        
-        let connection = TnNetworkConnection(nwConnection: nwConnection, delegate: self, transportingInfo: transportingInfo)
-        self.connections.append(connection)
-        connection.start()
-    }
-    
-    private func stop() {
-        self.listener.stateUpdateHandler = nil
-        self.listener.newConnectionHandler = nil
-        for connection in self.connections {
-            connection.stop()
-        }
-        self.listener.cancel()
-        
-        logDebug("stopped")
-        delegate?.tnNetworkStop(self, error: nil)
-    }
-    
-    public func start() {
-        logDebug("starting...")
-        
-        listener.stateUpdateHandler = self.stateDidChange(to:)
-        listener.newConnectionHandler = self.didAccept(nwConnection:)
-        
-        listener.start(queue: queue)
-    }
-    
-    public var connectionCount: Int {
-        connections.count
-    }
-    
-    public var hasConnections: Bool {
-        !connections.isEmpty
-    }
-}
-
-// MARK: TnNetworkDelegate for client
-extension TnNetworkServer: TnNetworkDelegate {
-    public func tnNetworkReady(_ connection: TnNetworkConnection) {
-        logDebug("accepted", connection.hostInfo.host)
-
-        delegate?.tnNetworkAccepted(self, connection: connection)
-    }
-    
-    public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
-        logDebug("disconnected of", connection.hostInfo.host)
-        self.connections.removeAll(where: { c in c.name == connection.name})
-        delegate?.tnNetworkStop(self, connection: connection, error: error)
-    }
-
-    public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
-        logDebug("received from", connection.hostInfo.host)
-        
-        // check identifier msg
-        if connection.name.isEmpty {
-            if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
-                logDebug("receive name", msg.value)
-                connection.setName(msg.value)
-            }
-        }
-        delegate?.tnNetworkReceived(self, connection: connection, data: data)
-    }
-
-    public func tnNetworkSent(_ connection: TnNetworkConnection, count: Int) {
-        logDebug("sent to", connection.hostInfo.host)
-
-        delegate?.tnNetworkSent(self, connection: connection, count: count)
-    }
-}
-
-extension TnNetworkServer: TnTransportableProtocol {
-    public var encoder: TnEncoder {
-        transportingInfo.encoder
-    }
-    
-    public var decoder: any TnDecoder {
-        transportingInfo.decoder
-    }
-
-//    public func send(_ data: Data) async throws {
-//        for connection in connections {
-//            try await connection.send(data)
-//        }
-//    }
-//
-//    public func send(_ data: Data, client: String?) async throws {
-//        if let connection = connections.first(where: { $0.name == client}) {
-//            try await connection.send(data)
-//        }
-//    }
-    
-    public func send(data: Data, to: [String]?) async throws {
-        for connection in connections {
-            if to == nil || to!.contains(connection.name) {
-                try await connection.send(data: data, to: nil)
-            }
-        }
-    }
-}
 
 // MARK: TnNetworkConnection
 public class TnNetworkConnection: TnLoggable {
@@ -233,13 +56,17 @@ public class TnNetworkConnection: TnLoggable {
     deinit {
         self.stop()
     }
-    
-    private func stop(error: Error?) {
-        connection.stateUpdateHandler = nil
-        connection.cancel()
-        delegate?.tnNetworkStop(self, error: error)
-    }
-    
+}
+
+// MARK: equatable
+extension TnNetworkConnection: Equatable {
+    public static func == (lhs: TnNetworkConnection, rhs: TnNetworkConnection) -> Bool {
+        lhs.hostInfo == rhs.hostInfo
+    }    
+}
+
+// MARK: handle state
+extension TnNetworkConnection {
     private func onStateChanged(to state: NWConnection.State) {
         logDebug("state changed", state)
         
@@ -267,11 +94,20 @@ public class TnNetworkConnection: TnLoggable {
             break
         }
     }
+}
+
+// MARK: start/stop
+extension TnNetworkConnection {
+    private func stop(error: Error?) {
+        connection.stateUpdateHandler = nil
+        connection.cancel()
+        delegate?.tnNetworkStop(self, error: error)
+    }
     
     public func start() {
         logDebug("starting")
 
-        connection.stateUpdateHandler = self.onStateChanged(to:)        
+        connection.stateUpdateHandler = self.onStateChanged(to:)
         connection.start(queue: queue)
     }
     
@@ -367,6 +203,7 @@ extension TnNetworkConnection {
     }
 }
 
+// MARK: TnTransportableProtocol
 extension TnNetworkConnection: TnTransportableProtocol {
     public var encoder: TnEncoder {
         transportingInfo.encoder
@@ -381,17 +218,5 @@ extension TnNetworkConnection: TnTransportableProtocol {
             return
         }
         try await self.sendMsg(data)
-    }
-}
-
-// MARK: NWEndpoint
-extension NWEndpoint {
-    public func getHostInfo() -> TnNetworkHostInfo {
-        switch self {
-        case .hostPort(let host, let port):
-            return TnNetworkHostInfo(host: "\(host)", port: port.rawValue)
-        default:
-            return TnNetworkHostInfo(host: "", port: 0)
-        }
     }
 }
