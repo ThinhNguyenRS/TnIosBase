@@ -279,22 +279,6 @@ extension TnBluetoothServer {
         logDebug("stopped")
         delegate?.tnBluetoothServer(ble: self, statusChanged: status)
     }
-    
-    public func send(data: Data, centralIDs: [String]?) {
-        guard !self.connectedCentrals.isEmpty, sendingWorker == nil else {
-            return
-        }
-        
-        TnBluetoothServer.sendingWorkerID += 1
-        let centrals = centralIDs == nil || centralIDs!.isEmpty ? connectedCentrals : centralIDs!.map { v in connectedCentrals.first(byID: v)!}
-        sendingWorker = SendingWorker(
-            id: TnBluetoothServer.sendingWorkerID,
-            outer: self,
-            centrals: centrals,
-            data: data,
-            EOM: transportingInfo.EOM
-        )
-    }
 }
 
 extension TnBluetoothServer: TnTransportableProtocol {
@@ -306,7 +290,19 @@ extension TnBluetoothServer: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data) async throws {
-        self.send(data: data, centralIDs: nil)
+    public func send(_ data: Data, to: [String]?) {
+        guard !self.connectedCentrals.isEmpty, sendingWorker == nil else {
+            return
+        }
+        
+        TnBluetoothServer.sendingWorkerID += 1
+        let centrals = to == nil || to!.isEmpty ? connectedCentrals : to!.map { v in connectedCentrals.first(byID: v)!}
+        sendingWorker = SendingWorker(
+            id: TnBluetoothServer.sendingWorkerID,
+            outer: self,
+            centrals: centrals,
+            data: data,
+            EOM: transportingInfo.EOM
+        )
     }
 }

@@ -386,24 +386,6 @@ extension TnBluetoothClient {
         changeStatus(.cleanup)
     }
     
-    public func send(data: Data, peripheralIDs: [String]? = nil) {
-        guard transferCharacteristic != nil else {
-            return
-        }
-        
-        let peripherals = peripheralIDs == nil || peripheralIDs!.isEmpty ? self.connectedPeripherals : peripheralIDs!.map { v in self.connectedPeripherals.first(byID: v)! }
-        for peripheral in peripherals {
-            TnBluetoothClient.sendingWorkerID += 1
-            let worker = SendingWorker(
-                id: TnBluetoothClient.sendingWorkerID,
-                outer: self,
-                peripheral: peripheral,
-                data: data
-            )
-            sendingWorkers.append(worker)
-        }
-    }
-    
     public func connect(peripheralID: String) {
         if let peripheral = discoveredPeripherals.first(byID: peripheralID) {
             // connect to the peripheral.
@@ -445,7 +427,21 @@ extension TnBluetoothClient: TnTransportableProtocol {
         transportingInfo.decoder
     }
     
-    public func send(_ data: Data) async throws {
-        self.send(data: data, peripheralIDs: nil)
+    public func send(_ data: Data, to: [String]?) {
+        guard transferCharacteristic != nil else {
+            return
+        }
+        
+        let peripherals = to == nil || to!.isEmpty ? self.connectedPeripherals : to!.map { v in self.connectedPeripherals.first(byID: v)! }
+        for peripheral in peripherals {
+            TnBluetoothClient.sendingWorkerID += 1
+            let worker = SendingWorker(
+                id: TnBluetoothClient.sendingWorkerID,
+                outer: self,
+                peripheral: peripheral,
+                data: data
+            )
+            sendingWorkers.append(worker)
+        }
     }
 }

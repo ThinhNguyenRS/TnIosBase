@@ -163,9 +163,23 @@ extension TnNetworkServer: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data) async throws {
+//    public func send(_ data: Data) async throws {
+//        for connection in connections {
+//            try await connection.send(data)
+//        }
+//    }
+//
+//    public func send(_ data: Data, client: String?) async throws {
+//        if let connection = connections.first(where: { $0.name == client}) {
+//            try await connection.send(data)
+//        }
+//    }
+    
+    public func send(_ data: Data, to: [String]?) async throws {
         for connection in connections {
-            try await connection.send(data)
+            if to == nil || to!.contains(connection.name) {
+                try await connection.send(data, to: nil)
+            }
         }
     }
 }
@@ -360,7 +374,7 @@ extension TnNetworkConnection: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data) async throws {
+    public func send(_ data: Data, to: [String]?) async throws {
         guard connection.state == .ready else {
             return
         }
