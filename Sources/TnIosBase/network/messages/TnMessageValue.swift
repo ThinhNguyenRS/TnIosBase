@@ -10,9 +10,9 @@ import Foundation
 // MARK: TnMessageValue
 public struct TnMessageValue<T: Codable>: TnMessageObject {
     public let typeCode: UInt8
-    public let value: T
+    public let value: T?
     
-    public init(_ typeCode: UInt8, _ value: T) {
+    public init(_ typeCode: UInt8, _ value: T?) {
         self.typeCode = typeCode
         self.value = value
     }
