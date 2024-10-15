@@ -23,5 +23,10 @@ extension TnTransportableProtocol {
     public func send<TMessage: TnMessageObject>(object: TMessage, to: [String]? = nil) async throws {
         try await self.send(msg: object.toMessageData(encoder: encoder), to: to)
     }
+    
+    public func send<T: Codable>(typeCode: UInt8, value: T, to: [String]? = nil) async throws {
+        let msgValue = TnMessageValue(typeCode, value)
+        try await self.send(object: msgValue, to: to)
+    }
 }
 
