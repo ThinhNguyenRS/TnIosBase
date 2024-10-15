@@ -101,13 +101,13 @@ extension TnNetworkServer {
 // MARK: TnNetworkDelegate for client
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
-        logDebug("accepted", connection.hostInfo.host)
+        logDebug("accepted \(connection.hostInfo.host):\(connection.hostInfo.port)")
 
         delegate?.tnNetworkAccepted(self, connection: connection)
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
-        logDebug("disconnected of", connection.hostInfo.host)
+        logDebug("disconnected of", connection.name)
         self.connections.removeAll(where: { c in c.name == connection.name})
         delegate?.tnNetworkStop(self, connection: connection, error: error)
 //        if !self.connections.isEmpty {
@@ -117,12 +117,13 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 
     public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
-        logDebug("received from", connection.hostInfo.host)
+        logDebug("received from", connection.name)
         
         // check identifier msg
         if connection.name.isEmpty {
             if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
                 connection.setName(msg.value)
+                logDebug("received name", connection.name)
             }
         }
         delegate?.tnNetworkReceived(self, connection: connection, data: data)
