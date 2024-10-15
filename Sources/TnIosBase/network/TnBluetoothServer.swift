@@ -290,7 +290,7 @@ extension TnBluetoothServer: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(_ data: Data, to: [String]?) {
+    public func send(data: Data, to: [String]?) {
         guard !self.connectedCentrals.isEmpty, sendingWorker == nil else {
             return
         }

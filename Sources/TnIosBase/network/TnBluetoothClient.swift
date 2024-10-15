@@ -427,7 +427,7 @@ extension TnBluetoothClient: TnTransportableProtocol {
         transportingInfo.decoder
     }
     
-    public func send(_ data: Data, to: [String]?) {
+    public func send(data: Data, to: [String]?) {
         guard transferCharacteristic != nil else {
             return
         }
