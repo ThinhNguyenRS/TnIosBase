@@ -432,7 +432,19 @@ extension TnBluetoothClient: TnTransportableProtocol {
             return
         }
         
-        let peripherals = to == nil || to!.isEmpty ? self.connectedPeripherals : to!.map { v in self.connectedPeripherals.first(byID: v)! }
+        // TODO: ignore `to`
+//        let peripherals = to == nil || to!.isEmpty ? self.connectedPeripherals : to!.map { v in self.connectedPeripherals.first(byID: v)! }
+//        for peripheral in peripherals {
+//            TnBluetoothClient.sendingWorkerID += 1
+//            let worker = SendingWorker(
+//                id: TnBluetoothClient.sendingWorkerID,
+//                outer: self,
+//                peripheral: peripheral,
+//                data: data
+//            )
+//            sendingWorkers.append(worker)
+//        }
+        let peripherals = self.connectedPeripherals
         for peripheral in peripherals {
             TnBluetoothClient.sendingWorkerID += 1
             let worker = SendingWorker(

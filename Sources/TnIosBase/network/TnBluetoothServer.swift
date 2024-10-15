@@ -296,7 +296,16 @@ extension TnBluetoothServer: TnTransportableProtocol {
         }
         
         TnBluetoothServer.sendingWorkerID += 1
-        let centrals = to == nil || to!.isEmpty ? connectedCentrals : to!.map { v in connectedCentrals.first(byID: v)!}
+        // TODO: ignore `to`
+//        let centrals = to == nil || to!.isEmpty ? connectedCentrals : to!.map { v in connectedCentrals.first(byID: v)!}
+//        sendingWorker = SendingWorker(
+//            id: TnBluetoothServer.sendingWorkerID,
+//            outer: self,
+//            centrals: centrals,
+//            data: data,
+//            EOM: transportingInfo.EOM
+//        )
+        let centrals = connectedCentrals
         sendingWorker = SendingWorker(
             id: TnBluetoothServer.sendingWorkerID,
             outer: self,
