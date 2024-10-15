@@ -141,6 +141,7 @@ extension TnNetworkServer: TnNetworkDelegate {
         // check identifier msg
         if connection.name.isEmpty {
             if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
+                logDebug("receive name", msg.value)
                 connection.setName(msg.value)
             }
         }
@@ -248,6 +249,7 @@ public class TnNetworkConnection: TnLoggable {
             // send its name to server
             if isClient {
                 Task { [self] in
+                    logDebug("send name", name)
                     try await send(object: TnMessageSystem.toMessageIndentifier(name: name), to: nil)
                 }
             }
