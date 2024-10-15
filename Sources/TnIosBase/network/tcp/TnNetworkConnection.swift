@@ -99,9 +99,11 @@ extension TnNetworkConnection {
 // MARK: start/stop
 extension TnNetworkConnection {
     private func stop(error: Error?) {
-        connection.stateUpdateHandler = nil
-        connection.cancel()
-        delegate?.tnNetworkStop(self, error: error)
+        if connection.state != .cancelled {
+            connection.stateUpdateHandler = nil
+            connection.cancel()
+            delegate?.tnNetworkStop(self, error: error)
+        }
     }
     
     public func start() {
