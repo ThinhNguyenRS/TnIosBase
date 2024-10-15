@@ -54,7 +54,7 @@ public class TnNetworkConnection: TnLoggable {
     }
     
     deinit {
-        self.stop()
+        stop()
     }
 }
 
@@ -121,16 +121,24 @@ extension TnNetworkConnection {
 // MARK: TnNetworkConnection receiving async
 extension TnNetworkConnection {
     private func receiveChunk(minSize: Int, maxSize: Int) async throws -> Data? {
-        return try await withCheckedThrowingContinuation { continuation in
-            connection.receive(minimumIncompleteLength: minSize, maximumLength: maxSize) { content, context, isComplete, error in
+        return try await withCheckedThrowingContinuation { [weak self] continuation in
+            guard let self else {
+                return
+            }
+            
+            connection.receive(minimumIncompleteLength: minSize, maximumLength: maxSize) { [weak self] content, context, isComplete, error in
+                guard let self else {
+                    return
+                }
+
                 if let error {
-                    self.stop(error: error)
+                    stop(error: error)
                     continuation.resume(throwing: error)
                 } else if isComplete {
-                    self.stop(error: nil)
+                    stop(error: nil)
                     continuation.resume(throwing: TnAppError.general(message: "Receive error: The connection is closed"))
                 } else {
-                    self.logDebug("receive chunk", content?.count)
+                    logDebug("receive chunk", content?.count)
                     continuation.resume(
                         returning: content
                     )
@@ -142,17 +150,17 @@ extension TnNetworkConnection {
     private func receiveMsg() async throws -> Data? {
         if let msgSizeData = try await receiveChunk(minSize: TSize.size, maxSize: TSize.size) {
             let msgSize: TSize = msgSizeData.toNumber()
-            self.logDebug("received msgSize", msgSize)
+            logDebug("received msgSize", msgSize)
             
             if msgSize < 0 || msgSize > transportingInfo.MTU {
-                self.stop()
+                stop()
                 throw TnAppError.general(message: "Receive error: Something wrong")
             } else {
                 guard let msgData = try await receiveChunk(minSize: Int(msgSize), maxSize: Int(msgSize)), msgData.count == msgSize else {
-                    self.stop()
+                    stop()
                     throw TnAppError.general(message: "Receive error: Message corrupted")
                 }
-                self.logDebug("received msg", msgData.count)
+                logDebug("received msg", msgData.count)
                 return msgData
             }
         }
@@ -165,7 +173,7 @@ extension TnNetworkConnection {
             logDebug("startReceiveMsg start")
             while connection.state == .ready {
                 logDebug("startReceiveMsg ...")
-                if let msgData = try await self.receiveMsg() {
+                if let msgData = try await receiveMsg() {
                     delegate?.tnNetworkReceived(self, data: msgData)
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
@@ -180,7 +188,7 @@ extension TnNetworkConnection {
     private func sendChunk(_ data: Data) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             logDebug("sending", data.count)
-            self.connection.send(content: data, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
+            connection.send(content: data, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
@@ -219,6 +227,6 @@ extension TnNetworkConnection: TnTransportableProtocol {
         guard connection.state == .ready else {
             return
         }
-        try await self.sendMsg(data)
+        try await sendMsg(data)
     }
 }
