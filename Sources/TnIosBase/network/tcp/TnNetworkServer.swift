@@ -39,6 +39,10 @@ public class TnNetworkServer: TnLoggable {
     public var hasConnections: Bool {
         !connections.isEmpty
     }
+    
+    public func hasConnection(name: String) -> Bool {
+        connections.contains(where: { $0.name == name })
+    }
 }
 
 // MARK: handle state
