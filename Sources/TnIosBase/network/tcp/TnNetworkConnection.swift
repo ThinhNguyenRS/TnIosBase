@@ -37,7 +37,7 @@ public class TnNetworkConnection: TnLoggable {
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
-        logDebug("inited incoming", hostInfo.host)
+        logDebug("inited connection", hostInfo.host)
     }
     
     public init(hostInfo: TnNetworkHostInfo, name: String, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
@@ -70,7 +70,7 @@ extension TnNetworkConnection {
     private func onStateChanged(to state: NWConnection.State) {
         switch state {
         case .ready:
-            logDebug("ready")
+            logDebug("start !")
             // send its name to server
             if isClient {
                 Task { [self] in
@@ -107,7 +107,7 @@ extension TnNetworkConnection {
     }
     
     public func start() {
-        logDebug("starting")
+        logDebug("start ...")
 
         connection.stateUpdateHandler = self.onStateChanged(to:)
         connection.start(queue: queue)
@@ -137,10 +137,7 @@ extension TnNetworkConnection {
                     stop(error: nil)
                     continuation.resume(throwing: TnAppError.general(message: "Receive error: The connection is closed"))
                 } else {
-                    logDebug("receive chunk", content?.count)
-                    continuation.resume(
-                        returning: content
-                    )
+                    continuation.resume(returning: content)
                 }
             }
         }
@@ -149,7 +146,6 @@ extension TnNetworkConnection {
     private func receiveMsg() async throws -> Data? {
         if let msgSizeData = try await receiveChunk(minSize: TSize.size, maxSize: TSize.size) {
             let msgSize: TSize = msgSizeData.toNumber()
-            logDebug("received msgSize", msgSize)
             
             if msgSize < 0 || msgSize > transportingInfo.MTU {
                 stop()
@@ -159,7 +155,6 @@ extension TnNetworkConnection {
                     stop()
                     throw TnAppError.general(message: "Receive error: Message corrupted")
                 }
-                logDebug("received msg", msgData.count)
                 return msgData
             }
         }
@@ -169,15 +164,12 @@ extension TnNetworkConnection {
     
     private func startReceiveMsg() {
         Task {
-            logDebug("startReceiveMsg start")
             while connection.state == .ready {
-                logDebug("startReceiveMsg ...")
                 if let msgData = try await receiveMsg() {
                     delegate?.tnNetworkReceived(self, data: msgData)
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
-            logDebug("startReceiveMsg done", connection.state)
         }
     }
 }
@@ -186,14 +178,12 @@ extension TnNetworkConnection {
 extension TnNetworkConnection {
     private func sendChunk(_ data: Data) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            logDebug("sending", data.count)
             connection.send(content: data, contentContext: .defaultMessage, isComplete: true, completion: .contentProcessed( { [self] error in
                 if let error = error {
                     logError("send error", error.localizedDescription)
                     stop(error: error)
                     continuation.resume(throwing: error)
                 } else {
-                    logDebug("sent", data.count)
                     continuation.resume(returning: Void())
                 }
             }))

@@ -48,16 +48,16 @@ extension TnNetworkServer {
     private func stateDidChange(to newState: NWListener.State) {
         switch newState {
         case .ready:
-            logDebug("ready")
+            logDebug("start !")
             delegate?.tnNetworkReady(self)
         case .waiting(let error):
-            logDebug("waiting", error)
+            logDebug("state waiting", error)
             delegate?.tnNetworkStop(self, error: error)
         case .failed(let error):
-            logDebug("failed", error)
+            logDebug("state failed", error)
             delegate?.tnNetworkStop(self, error: error)
         case .cancelled:
-            logDebug("cancelled")
+            logDebug("state cancelled")
             delegate?.tnNetworkStop(self, error: nil)
         default:
             break
@@ -68,8 +68,7 @@ extension TnNetworkServer {
 // MARK: accept
 extension TnNetworkServer {
     private func didAccept(nwConnection: NWConnection) {
-        logDebug("accepting")
-        
+        logDebug("connection accepting")
         let connection = TnNetworkConnection(nwConnection: nwConnection, delegate: self, transportingInfo: transportingInfo)
         self.connections.append(connection)
         connection.start()
@@ -79,6 +78,8 @@ extension TnNetworkServer {
 // MARK: start/stop
 extension TnNetworkServer {
     public func stop() {
+        logDebug("stop ...")
+
         self.listener.stateUpdateHandler = nil
         self.listener.newConnectionHandler = nil
         for connection in self.connections {
@@ -86,12 +87,12 @@ extension TnNetworkServer {
         }
         self.listener.cancel()
         
-        logDebug("stopped")
+        logDebug("stop !")
         delegate?.tnNetworkStop(self, error: nil)
     }
     
     public func start() {
-        logDebug("starting...")
+        logDebug("start ...")
         
         listener.stateUpdateHandler = self.stateDidChange(to:)
         listener.newConnectionHandler = self.didAccept(nwConnection:)
@@ -103,11 +104,11 @@ extension TnNetworkServer {
 // MARK: TnNetworkDelegate for client
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
-//        logDebug("accepted \(connection.hostInfo.host):\(connection.hostInfo.port)")
+        logDebug("connection accepted \(connection.hostInfo.host):\(connection.hostInfo.port)")
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
-        logDebug("disconnected of", connection.name)
+        logDebug("connection disconnected", connection.name)
 
         // remove the connection from dict
         self.connections.removeAll(where: { $0.name == connection.name})
@@ -116,13 +117,11 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 
     public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
-        logDebug("received from", connection.name)
-        
         // check identifier msg
         if connection.name.isEmpty {
             if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
                 connection.setName(msg.value)
-                logDebug("accepted \(connection.hostInfo.host):\(connection.hostInfo.port)", connection.name)
+                logDebug("connection accepted with name \(connection.hostInfo.host):\(connection.hostInfo.port)", connection.name)
                 delegate?.tnNetworkAccepted(self, connection: connection)
             }
         }
@@ -130,8 +129,6 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 
     public func tnNetworkSent(_ connection: TnNetworkConnection, count: Int) {
-        logDebug("sent to", connection.hostInfo.host)
-
         delegate?.tnNetworkSent(self, connection: connection, count: count)
     }
 }
