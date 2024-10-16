@@ -13,7 +13,10 @@ public class TnNetworkServer: TnLoggable {
     public let hostInfo: TnNetworkHostInfo
     
     private let listener: NWListener
-    private var connections: [TnNetworkConnection] = []
+    
+    @TnLockable private var connections: [TnNetworkConnection] = []
+    @TnLockable private var connectionsByName: [String: TnNetworkConnection] = [:]
+    
     private let queue: DispatchQueue
     public var delegate: TnNetworkDelegateServer? = nil
     private let transportingInfo: TnNetworkTransportingInfo
@@ -32,16 +35,16 @@ public class TnNetworkServer: TnLoggable {
         self.stop()
     }
     
-    public var connectionCount: Int {
-        connections.count
-    }
-    
     public var hasConnections: Bool {
-        !connections.isEmpty
+        !connectionsByName.isEmpty
     }
     
     public func hasConnection(name: String) -> Bool {
-        connections.contains(where: { $0.name == name })
+        connectionsByName.keys.contains(name)
+    }
+    
+    func getConnection(name: String) -> TnNetworkConnection? {
+        connectionsByName[name]
     }
 }
 
@@ -83,7 +86,7 @@ extension TnNetworkServer {
     public func stop() {
         self.listener.stateUpdateHandler = nil
         self.listener.newConnectionHandler = nil
-        for connection in self.connections {
+        for connection in self.connectionsByName.values {
             connection.stop()
         }
         self.listener.cancel()
@@ -112,12 +115,11 @@ extension TnNetworkServer: TnNetworkDelegate {
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
         logDebug("disconnected of", connection.name)
-        self.connections.removeAll(where: { c in c.name == connection.name})
+
+        // remove the connection from dict
+        self.connectionsByName.removeValue(forKey: connection.name)
+
         delegate?.tnNetworkStop(self, connection: connection, error: error)
-//        if !self.connections.isEmpty {
-//            self.connections.removeAll(where: { c in c.name == connection.name})
-//            delegate?.tnNetworkStop(self, connection: connection, error: error)
-//        }
     }
 
     public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
@@ -126,7 +128,12 @@ extension TnNetworkServer: TnNetworkDelegate {
         // check identifier msg
         if connection.name.isEmpty {
             if let msg = TnMessageSystem.toMessageIndentifier(data: data, decoder: transportingInfo.decoder) {
-                connection.setName(msg.value)
+                connection.setName(msg.value)                
+                // add to dict
+                connectionsByName[connection.name] = connection
+                // remove the connection from list
+                connections.remove(of: connection)
+
                 logDebug("received name", connection.name)
             }
         }
@@ -151,7 +158,7 @@ extension TnNetworkServer: TnTransportableProtocol {
     }
 
     public func send(data: Data, to: [String]?) async throws {
-        for connection in connections {
+        for connection in connectionsByName.values {
             if to == nil || to!.contains(connection.name) {
                 try await connection.send(data: data, to: nil)
             }
