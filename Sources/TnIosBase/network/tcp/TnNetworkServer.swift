@@ -108,9 +108,7 @@ extension TnNetworkServer {
 // MARK: TnNetworkDelegate for client
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
-        logDebug("accepted \(connection.hostInfo.host):\(connection.hostInfo.port)")
-
-        delegate?.tnNetworkAccepted(self, connection: connection)
+//        logDebug("accepted \(connection.hostInfo.host):\(connection.hostInfo.port)")
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
@@ -134,7 +132,8 @@ extension TnNetworkServer: TnNetworkDelegate {
                 // remove the connection from list
                 connections.remove(of: connection)
 
-                logDebug("received name", connection.name)
+                logDebug("accepted \(connection.hostInfo.host):\(connection.hostInfo.port)", connection.name)
+                delegate?.tnNetworkAccepted(self, connection: connection)
             }
         }
         delegate?.tnNetworkReceived(self, connection: connection, data: data)
