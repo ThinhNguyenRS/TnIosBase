@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: NSData toString
 extension NSData {
-    func toString() -> String {
+    public func toString() -> String {
         let dataString = String(decoding: self, as: UTF8.self)
         return dataString
     }
@@ -17,7 +17,7 @@ extension NSData {
 
 // MARK: Data toString
 extension Data {
-    func toString() -> String {
+    public func toString() -> String {
         let dataString = String(decoding: self, as: UTF8.self)
         return dataString
     }
@@ -25,7 +25,7 @@ extension Data {
 
 // MARK: Data tnToObjectFromJSON
 extension Data {
-    func tnToObjectFromJSON<T: Decodable>(_ type: T.Type) throws -> T {
+    public func tnToObjectFromJSON<T: Decodable>(_ type: T.Type) throws -> T {
         let decoder = JSONDecoder()
         let obj = try decoder.decode(type, from: self)
         return obj
@@ -35,7 +35,7 @@ extension Data {
 
 // MARK: Data split
 extension Data {
-    func split(separator: Data) -> [Data] {
+    public func split(separator: Data) -> [Data] {
         var chunks: [Data] = []
         var pos = startIndex
         // Find next occurrence of separator after current position:
