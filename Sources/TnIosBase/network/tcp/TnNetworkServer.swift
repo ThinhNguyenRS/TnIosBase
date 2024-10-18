@@ -65,16 +65,6 @@ extension TnNetworkServer {
     }
 }
 
-// MARK: accept
-extension TnNetworkServer {
-    private func didAccept(nwConnection: NWConnection) {
-        logDebug("connection accepting")
-        let connection = TnNetworkConnection(nwConnection: nwConnection, delegate: self, transportingInfo: transportingInfo)
-        self.connections.append(connection)
-        connection.start()
-    }
-}
-
 // MARK: start/stop
 extension TnNetworkServer {
     public func stop() {
@@ -101,6 +91,18 @@ extension TnNetworkServer {
     }
 }
 
+// MARK: accept
+extension TnNetworkServer {
+    private func didAccept(nwConnection: NWConnection) {
+        logDebug("connection accepting")
+        let connection = TnNetworkConnection(nwConnection: nwConnection, delegate: self, transportingInfo: transportingInfo)
+        self.connections.append(connection)
+        connection.start()
+
+        logDebug("connections", self.connections.map { $0.name })
+    }
+}
+
 // MARK: TnNetworkDelegate for client
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
@@ -112,8 +114,9 @@ extension TnNetworkServer: TnNetworkDelegate {
 
         // remove the connection from dict
         self.connections.removeAll(where: { $0.name == connection.name})
-
         delegate?.tnNetworkStop(self, connection: connection, error: error)
+
+        logDebug("connections", self.connections.map { $0.name })
     }
 
     public func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data) {
@@ -123,6 +126,8 @@ extension TnNetworkServer: TnNetworkDelegate {
                 connection.setName(msg.value)
                 logDebug("connection accepted with name \(connection.hostInfo.host):\(connection.hostInfo.port)", connection.name)
                 delegate?.tnNetworkAccepted(self, connection: connection)
+
+                logDebug("connections", self.connections.map { $0.name })
             }
         }
         delegate?.tnNetworkReceived(self, connection: connection, data: data)
