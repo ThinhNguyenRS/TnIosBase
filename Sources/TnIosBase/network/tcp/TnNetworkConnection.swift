@@ -17,8 +17,13 @@ public class TnNetworkConnection: TnLoggable {
     private let connection: NWConnection
     private let queue: DispatchQueue
     private let transportingInfo: TnNetworkTransportingInfo
-    private let receiveQueueQueue: DispatchQueue
     
+    public let receiveStream: TnAsyncStream<Data> = .init()
+    private var receiveTask: Task<Void, Error>? = nil
+    
+    private let sendStream: TnAsyncStream<Data> = .init()
+    private var sendTask: Task<Void, Error>? = nil
+
     public private(set) var name: String = ""
     public func setName(_ name: String) {
         if self.name.isEmpty {
@@ -33,7 +38,6 @@ public class TnNetworkConnection: TnLoggable {
         self.connection = nwConnection
         self.hostInfo = nwConnection.endpoint.getHostInfo()
         self.queue = DispatchQueue(label: "\(Self.self).queue")
-        self.receiveQueueQueue = DispatchQueue(label: "\(Self.self).receiveQueueQueue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -46,7 +50,6 @@ public class TnNetworkConnection: TnLoggable {
         self.name = name
         self.connection = NWConnection(host: NWEndpoint.Host(hostInfo.host), port: NWEndpoint.Port(rawValue: hostInfo.port)!, using: .tcp)
         self.queue = DispatchQueue(label: "\(Self.self).queue")
-        self.receiveQueueQueue = DispatchQueue(label: "\(Self.self).receiveQueueQueue")
         self.delegate = delegate
         self.transportingInfo = transportingInfo
         
@@ -79,7 +82,10 @@ extension TnNetworkConnection {
                 }
             }
             startReceiveMsg()
-            delegate?.tnNetworkReady(self)
+            startSendMsg()
+            if !name.isEmpty {
+                delegate?.tnNetworkReady(self)
+            }
         case .waiting(let error):
             logDebug("waiting", error)
             stop(error: error)
@@ -98,11 +104,12 @@ extension TnNetworkConnection {
 // MARK: start/stop
 extension TnNetworkConnection {
     private func stop(error: Error?) {
-//        if connection.state != .cancelled {
-//            connection.stateUpdateHandler = nil
-//            connection.cancel()
-//            delegate?.tnNetworkStop(self, error: error)
-//        }
+        receiveStream.finish()
+        receiveTask?.cancel()
+        
+        sendStream.finish()
+        sendTask?.cancel()
+        
         delegate?.tnNetworkStop(self, error: error)
     }
     
@@ -163,10 +170,18 @@ extension TnNetworkConnection {
     }
     
     private func startReceiveMsg() {
-        Task {
+        receiveTask = Task {
             while connection.state == .ready {
                 if let msgData = try await receiveMsg() {
-                    delegate?.tnNetworkReceived(self, data: msgData)
+                    // process identifier msg
+                    if name.isEmpty {
+                        if let msg = TnMessageSystem.toMessageIndentifier(data: msgData, decoder: transportingInfo.decoder) {
+                            self.name = msg.value
+                            delegate?.tnNetworkReady(self)
+                            continue
+                        }
+                    }
+                    receiveStream.yield(msgData)
                 }
                 try await Task.sleep(nanoseconds: 1_000_1000)
             }
@@ -196,9 +211,16 @@ extension TnNetworkConnection {
         var sendData = Data(capacity: msgSizeData.count + msgData.count)
         sendData.append(msgSizeData)
         sendData.append(msgData)
-
+        
         try await sendChunk(sendData)
-        delegate?.tnNetworkSent(self, count: sendData.count)
+    }
+    
+    private func startSendMsg() {
+        sendTask = Task {
+            for await msgData in sendStream.stream {
+                try await sendMsg(msgData)
+            }
+        }
     }
 }
 
@@ -216,6 +238,6 @@ extension TnNetworkConnection: TnTransportableProtocol {
         guard connection.state == .ready else {
             return
         }
-        try await sendMsg(data)
+        sendStream.yield(data)
     }
 }

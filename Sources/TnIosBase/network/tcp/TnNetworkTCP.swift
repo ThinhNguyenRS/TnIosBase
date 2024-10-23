@@ -10,9 +10,6 @@ import Network
 
 // MARK: TnNetworkDelegate
 public protocol TnNetworkDelegate {
-    func tnNetworkSent(_ connection: TnNetworkConnection, count: Int)
-    func tnNetworkReceived(_ connection: TnNetworkConnection, data: Data)
-    
     func tnNetworkReady(_ connection: TnNetworkConnection)
     func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?)
 }
@@ -23,9 +20,6 @@ public protocol TnNetworkDelegateServer {
     func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
     func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnection, error: Error?)
     func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnection)
-    
-    func tnNetworkSent(_ server: TnNetworkServer, connection: TnNetworkConnection, count: Int)
-    func tnNetworkReceived(_ server: TnNetworkServer, connection: TnNetworkConnection, data: Data)
 }
 
 // MARK: TnNetworkHostInfo
