@@ -7,7 +7,7 @@
 
 import Foundation
 
-public final class TnAsyncStream<TElement> {
+public final class TnAsyncStreamer<TElement> {
     public typealias TAsyncStream = AsyncStream<TElement>
     public typealias TAsyncContinuation = TAsyncStream.Continuation
 
@@ -30,7 +30,7 @@ public final class TnAsyncStream<TElement> {
     }
 }
 
-extension TnAsyncStream {
+extension TnAsyncStreamer {
     public convenience init() {
         self.init(bufferingPolicy: .unbounded)
     }

@@ -18,10 +18,10 @@ public class TnNetworkConnection: TnLoggable {
     private let queue: DispatchQueue
     private let transportingInfo: TnNetworkTransportingInfo
     
-    public let receiveStream: TnAsyncStream<Data> = .init()
+    public let receiveStream: TnAsyncStreamer<Data> = .init()
     private var receiveTask: Task<Void, Error>? = nil
     
-    private let sendStream: TnAsyncStream<Data> = .init()
+    private let sendStream: TnAsyncStreamer<Data> = .init()
     private var sendTask: Task<Void, Error>? = nil
 
     public private(set) var name: String = ""
