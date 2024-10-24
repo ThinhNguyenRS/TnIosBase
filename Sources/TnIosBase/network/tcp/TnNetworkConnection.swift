@@ -78,7 +78,7 @@ extension TnNetworkConnection {
             if isClient {
                 Task { [self] in
                     logDebug("send name", name)
-                    try await send(object: TnMessageSystem.toMessageIndentifier(name: name), to: nil)
+                    try await send(object: TnMessageSystem.toMessageIndentifier(name: name))
                 }
             }
             startReceiveMsg()
@@ -234,7 +234,7 @@ extension TnNetworkConnection: TnTransportableProtocol {
         transportingInfo.decoder
     }
 
-    public func send(data: Data, to: [String]?) async throws {
+    public func send(data: Data) async throws {
         guard connection.state == .ready else {
             return
         }

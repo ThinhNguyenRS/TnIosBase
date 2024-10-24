@@ -126,21 +126,19 @@ extension TnNetworkServer: TnNetworkDelegate {
     }
 }
 
-// MARK: TnTransportableProtocol
-extension TnNetworkServer: TnTransportableProtocol {
-    public var encoder: TnEncoder {
-        transportingInfo.encoder
-    }
-    
-    public var decoder: any TnDecoder {
-        transportingInfo.decoder
-    }
-
-    public func send(data: Data, to: [String]?) async throws {
-        for connection in connections {
-            if to == nil || to!.contains(connection.name) {
-                try await connection.send(data: data, to: nil)
-            }
-        }
-    }
-}
+//// MARK: TnTransportableProtocol
+//extension TnNetworkServer: TnTransportableProtocol {
+//    public var encoder: TnEncoder {
+//        transportingInfo.encoder
+//    }
+//    
+//    public var decoder: any TnDecoder {
+//        transportingInfo.decoder
+//    }
+//
+//    public func send(data: Data) async throws {
+//        for connection in connections {
+//            try await connection.send(data: data)
+//        }
+//    }
+//}
