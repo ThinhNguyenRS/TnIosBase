@@ -14,14 +14,8 @@ public final class TnAsyncStream<TElement> {
     private var continuation: TAsyncContinuation!
     public private(set) var stream: TAsyncStream!
     
-    public init() {
+    public init(bufferingPolicy limit: TAsyncContinuation.BufferingPolicy) {
         self.stream = .init { continuation in
-            self.continuation = continuation
-        }
-    }
-    
-    public init(capacities: Int) {
-        self.stream = .init(bufferingPolicy: .bufferingNewest(capacities)){ continuation in
             self.continuation = continuation
         }
     }
@@ -33,5 +27,19 @@ public final class TnAsyncStream<TElement> {
     
     public func finish() {
         continuation.finish()
+    }
+}
+
+extension TnAsyncStream {
+    public convenience init() {
+        self.init(bufferingPolicy: .unbounded)
+    }
+    
+    public convenience init(newest: Int) {
+        self.init(bufferingPolicy: .bufferingNewest(newest))
+    }
+    
+    public convenience init(oldest: Int) {
+        self.init(bufferingPolicy: .bufferingOldest(oldest))
     }
 }
