@@ -18,7 +18,8 @@ public protocol TnNetworkDelegate {
 public protocol TnNetworkDelegateServer {
     func tnNetworkReady(_ server: TnNetworkServer)
     func tnNetworkStop(_ server: TnNetworkServer, error: Error?)
-    func tnNetworkStop(_ server: TnNetworkServer, connection: TnNetworkConnection, error: Error?)
+    
+    func tnNetworkDisconnected(_ server: TnNetworkServer, connection: TnNetworkConnection, error: Error?)
     func tnNetworkAccepted(_ server: TnNetworkServer, connection: TnNetworkConnection)
 }
 
