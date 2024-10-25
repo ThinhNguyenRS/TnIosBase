@@ -43,8 +43,8 @@ extension TnNetworkServer {
         connections.contains(where: { $0.name == name })
     }
     
-    public func getConnections(name: String) -> [TnNetworkConnection] {
-        connections.filter{ $0.name == name }
+    public func getConnections(names: [String]) -> [TnNetworkConnection] {
+        connections.filter{ $0.name.isIn(names) }
     }
 }
 
@@ -137,16 +137,9 @@ extension TnNetworkServer {
     }
 
     public func send(data: Data, to: [String]? = nil) async throws {
-        if let to {
-            for name in to {
-                for connection in getConnections(name: name) {
-                    try await connection.send(data: data)
-                }
-            }
-        } else {
-            for connection in connections {
-                try await connection.send(data: data)
-            }
+        let connections = to != nil ? getConnections(names: to!) : self.connections
+        for connection in connections {
+            try await connection.send(data: data)
         }
     }
 }
