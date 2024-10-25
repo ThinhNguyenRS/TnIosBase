@@ -12,7 +12,7 @@ import Network
 public class TnNetworkServer: TnLoggable {
     public let hostInfo: TnNetworkHostInfo
     private let listener: NWListener
-    @TnLockable private var connections: [TnNetworkConnection] = []
+    private var connections: [TnNetworkConnection] = []
     
     private let queue: DispatchQueue
     public var delegate: TnNetworkDelegateServer? = nil
@@ -103,26 +103,22 @@ extension TnNetworkServer {
         let connection = TnNetworkConnection(nwConnection: nwConnection, delegate: self, transportingInfo: transportingInfo)
         self.connections.append(connection)
         connection.start()
-
-        logDebug("connections", self.connections.map { $0.name })
     }
 }
 
 // MARK: TnNetworkDelegate for client
 extension TnNetworkServer: TnNetworkDelegate {
     public func tnNetworkReady(_ connection: TnNetworkConnection) {
+        logDebug("connection accepted", connection.hostInfo, connection.name)
+
         delegate?.tnNetworkAccepted(self, connection: connection)
-        logDebug("connection accepted \(connection.hostInfo.host):\(connection.hostInfo.port):\(connection.name)")
     }
     
     public func tnNetworkStop(_ connection: TnNetworkConnection, error: Error?) {
-        logDebug("connection disconnected", connection.name)
+        logDebug("connection disconnected", connection.hostInfo, connection.name)
 
         // remove the connection from dict
-        self.connections.removeAll(where: { $0.name == connection.name})
         delegate?.tnNetworkDisconnected(self, connection: connection, error: error)
-
-        logDebug("connections", self.connections.map { $0.name })
     }
 }
 
