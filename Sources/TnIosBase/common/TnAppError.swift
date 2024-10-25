@@ -32,38 +32,3 @@ extension TnAppError: LocalizedError {
     }
 }
 
-public func tnDoCatch(name: String, action: @escaping () throws -> Void) throws {
-    do {
-        try action()
-    } catch {
-        TnLogger.error(name, error.localizedDescription)
-        throw error
-    }
-}
-
-public func tnDoCatch<T>(name: String, action: @escaping () throws -> T) throws -> T {
-    do {
-        return try action()
-    } catch {
-        TnLogger.error(name, error.localizedDescription)
-        throw error
-    }
-}
-
-public func tnDoCatchAsync(name: String, action: @escaping () async throws -> Void) async throws {
-    do {
-        try await action()
-    } catch {
-        TnLogger.error(name, error.localizedDescription)
-        throw error
-    }
-}
-
-public func tnDoCatchAsync<T>(name: String, action: @escaping () async throws -> T) async throws -> T {
-    do {
-        return try await action()
-    } catch {
-        TnLogger.error(name, error.localizedDescription)
-        throw error
-    }
-}

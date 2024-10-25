@@ -22,4 +22,8 @@ extension TnMessageObject {
             throw error
         }
     }
+    
+    public func toData(encoder: TnEncoder) throws -> Data {
+        try self.toMessageData(encoder: encoder).data
+    }
 }

@@ -31,7 +31,7 @@ public class TnNetworkConnection: TnLoggable {
         }
     }
     
-    private let isClient: Bool
+    public let isClient: Bool
     
     public init(nwConnection: NWConnection, delegate: TnNetworkDelegate?, transportingInfo: TnNetworkTransportingInfo) {
         self.isClient = false
@@ -77,8 +77,8 @@ extension TnNetworkConnection {
             // send its name to server
             if isClient {
                 Task { [self] in
-                    logDebug("send name", name)
-                    try await send(object: TnMessageSystem.toMessageIndentifier(name: name))
+                    logDebug("send name", name)                    
+                    try await send(object: TnMessageValue.from(TnMessageSystem.name, name))
                 }
             }
             startReceiveMsg()
@@ -175,7 +175,7 @@ extension TnNetworkConnection {
                 if let msgData = try await receiveMsg() {
                     // process identifier msg
                     if name.isEmpty {
-                        if let msg = TnMessageSystem.toMessageIndentifier(data: msgData, decoder: transportingInfo.decoder) {
+                        if let msg = TnMessageValue<String>.from(TnMessageSystem.name, data: msgData, decoder: transportingInfo.decoder) {
                             self.name = msg.value
                             delegate?.tnNetworkReady(self)
                             continue
@@ -224,8 +224,8 @@ extension TnNetworkConnection {
     }
 }
 
-// MARK: TnTransportableProtocol
-extension TnNetworkConnection: TnTransportableProtocol {
+// MARK: Transportable
+extension TnNetworkConnection/*: TnTransportableProtocol*/ {
     public var encoder: TnEncoder {
         transportingInfo.encoder
     }
@@ -239,5 +239,9 @@ extension TnNetworkConnection: TnTransportableProtocol {
             return
         }
         sendStream.yield(data)
+    }
+    
+    public func send(object: TnMessageObject) async throws {
+        try await self.send(data: object.toData(encoder: encoder))
     }
 }

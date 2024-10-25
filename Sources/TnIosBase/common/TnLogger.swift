@@ -38,15 +38,22 @@ public class TnLogger {
     }
 }
 
+// MARK: TnLoggable
 public protocol TnLoggable {
 }
 
 extension TnLoggable {
+    var logName: String {
+        "\(Self.self)"
+    }
+}
+
+extension TnLoggable {
     public func logDebug(_ items: Any?...) {
-        TnLogger.debug("\(Self.self)", items)
+        TnLogger.debug(logName, items)
     }
     
     public func logError(_ items: Any?...) {
-        TnLogger.error("\(Self.self)", items)
+        TnLogger.error(logName, items)
     }
 }

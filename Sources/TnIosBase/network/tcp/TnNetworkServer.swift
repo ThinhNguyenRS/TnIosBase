@@ -43,8 +43,8 @@ extension TnNetworkServer {
         connections.contains(where: { $0.name == name })
     }
     
-    public func getConnection(name: String) -> TnNetworkConnection? {
-        connections.first(where: { $0.name == name })
+    public func getConnections(name: String) -> [TnNetworkConnection] {
+        connections.filter{ $0.name == name }
     }
 }
 

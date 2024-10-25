@@ -66,4 +66,6 @@ extension Publisher where Failure == Never {
             .sink(receiveValue: handler)
             .store(in: &tnGlobalCancellables)
     }
+    
+    
 }

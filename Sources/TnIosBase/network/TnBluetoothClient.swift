@@ -21,7 +21,7 @@ public protocol TnBluetoothClientDelegate {
 }
 
 // MARK: members
-public class TnBluetoothClient: NSObject, ObservableObject {
+public class TnBluetoothClient: NSObject, ObservableObject, TnLoggable {
     class SendingWorker: Hashable, TnLoggable {
         static func == (lhs: TnBluetoothClient.SendingWorker, rhs: TnBluetoothClient.SendingWorker) -> Bool {
             lhs.id == rhs.id
@@ -418,7 +418,8 @@ extension TnBluetoothClient {
     }
 }
 
-extension TnBluetoothClient: TnTransportableProtocol {
+// MARK: Transportable
+extension TnBluetoothClient/*: TnTransportableProtocol*/ {
     public var encoder: TnEncoder {
         transportingInfo.encoder
     }
@@ -432,18 +433,6 @@ extension TnBluetoothClient: TnTransportableProtocol {
             return
         }
         
-        // TODO: ignore `to`
-//        let peripherals = to == nil || to!.isEmpty ? self.connectedPeripherals : to!.map { v in self.connectedPeripherals.first(byID: v)! }
-//        for peripheral in peripherals {
-//            TnBluetoothClient.sendingWorkerID += 1
-//            let worker = SendingWorker(
-//                id: TnBluetoothClient.sendingWorkerID,
-//                outer: self,
-//                peripheral: peripheral,
-//                data: data
-//            )
-//            sendingWorkers.append(worker)
-//        }
         let peripherals = self.connectedPeripherals
         for peripheral in peripherals {
             TnBluetoothClient.sendingWorkerID += 1
