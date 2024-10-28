@@ -11,13 +11,11 @@ public final class TnAsyncStreamer<TElement> {
     public typealias TAsyncStream = AsyncStream<TElement>
     public typealias TAsyncContinuation = TAsyncStream.Continuation
 
-    private var continuation: TAsyncContinuation!
-    public private(set) var stream: TAsyncStream!
+    private let continuation: TAsyncContinuation
+    public let stream: TAsyncStream
     
     public init(bufferingPolicy limit: TAsyncContinuation.BufferingPolicy) {
-        self.stream = .init { continuation in
-            self.continuation = continuation
-        }
+        (self.stream, self.continuation) = TAsyncStream.makeStream(bufferingPolicy: limit)
     }
     
     @discardableResult
@@ -41,5 +39,12 @@ extension TnAsyncStreamer {
     
     public convenience init(oldest: Int) {
         self.init(bufferingPolicy: .bufferingOldest(oldest))
+    }
+}
+
+// MARK: AsyncSequence
+extension TnAsyncStreamer: AsyncSequence {
+    public func makeAsyncIterator() -> TAsyncStream.Iterator {
+        stream.makeAsyncIterator()
     }
 }
