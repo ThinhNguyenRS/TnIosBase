@@ -33,13 +33,13 @@ extension TnAsyncStreamer {
         self.init(bufferingPolicy: .unbounded)
     }
     
-    public convenience init(newest: Int) {
-        self.init(bufferingPolicy: .bufferingNewest(newest))
-    }
-    
-    public convenience init(oldest: Int) {
-        self.init(bufferingPolicy: .bufferingOldest(oldest))
-    }
+//    public convenience init(newest: Int) {
+//        self.init(bufferingPolicy: .bufferingNewest(newest))
+//    }
+//    
+//    public convenience init(oldest: Int) {
+//        self.init(bufferingPolicy: .bufferingOldest(oldest))
+//    }
 }
 
 // MARK: AsyncSequence
